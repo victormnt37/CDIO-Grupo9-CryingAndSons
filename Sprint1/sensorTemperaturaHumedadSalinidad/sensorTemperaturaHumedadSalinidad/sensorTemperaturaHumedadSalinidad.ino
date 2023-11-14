@@ -6,7 +6,6 @@ Adafruit_ADS1115 ads2; // Instancia de Adafruit_ADS1115 para Temperatura
 
 // Inicialización variables Temperatura
 
-const int NTC_PIN = A0;  // Pin analógico al que está conectada la NTC
 float refResistance = 2160.0;  // Resistencia de referencia de la NTC
 float m = 0.034;
 float B = 0.784;
@@ -20,8 +19,8 @@ int HValue2 = 0;
 int HValue3 = 0;
 int HValue4 = 0;
 int HValue5 = 0;
-int MinSensor = 950; // valor en seco
-int MaxSensor = 440; // valor en mojado
+int MinSensor = 1300; // valor en seco
+int MaxSensor = 650; // valor en mojado
 
 // Inicialización variables salinidad
 
@@ -65,16 +64,23 @@ void loop() {
   medirHumedad();
   tomarTemperatura();
   medirSalinidad();
+  Serial.println("______________________________________________");
 }
 
 void medirHumedad() {
   sensorValue = ads.readADC_SingleEnded(0);
-  HValue1 = map(sensorValue, MinSensor, MaxSensor, 0, 100);
-  Serial.print("Humedad del primer programa: ");
-  Serial.println(HValue1, HValue2, HValue3, HValue4, HValue5);
+  // Convertir el valor leído del sensor a un valor de humedad en porcentaje (ajustar según las especificaciones del sensor).map(sensorValue,950, 440, 0, 100);
+  HValue1 = map(sensorValue,MinSensor, MaxSensor, 0, 100);
   delay(250);
-
-  int Media = (HValue1 + HValue2 + HValue3 + HValue4 + HValue5) / 5;
+  HValue2 = map(sensorValue,MinSensor, MaxSensor, 0, 100);
+  delay(250);
+  HValue3 = map(sensorValue,MinSensor, MaxSensor, 0, 100);
+  delay(250);
+  HValue4 = map(sensorValue,MinSensor, MaxSensor, 0, 100);
+  delay(250);
+  HValue5 = map(sensorValue,MinSensor, MaxSensor, 0, 100);
+  Serial.println(sensorValue);
+  int Media=(HValue1+HValue2+HValue3+HValue4+HValue5)/5;
 
   Serial.print("Medición de humedad: ");
   Serial.print(Media);
@@ -83,9 +89,9 @@ void medirHumedad() {
 }
 
 void tomarTemperatura() {
-  float rawValue = ads2.readADC_SingleEnded(0);
+  float rawValue = ads2.readADC_SingleEnded(1);
   float Volt = (rawValue / 32767) * 4.096;
-  float T = (Volt - B) / m;
+  float T = ((Volt - B) / m)-0.77;
 
   Serial.print("Lectura de temperatura: ");
   Serial.print(rawValue);
@@ -100,7 +106,7 @@ void tomarTemperatura() {
 void medirSalinidad() {
   int16_t adc0;
   float salinidad;
-  
+    
   // Alimentamos la sonda con un tren de pulsos
   digitalWrite(power_pin, HIGH);
   delay(100);
@@ -114,9 +120,13 @@ void medirSalinidad() {
   salinidad = map(adc0, 0, 1023, 0, 500); // Ajustar rango de mapeo
 
   // presentamos lectura
-  Serial.print("Lectura digital = ");
+  Serial.print("Lectura digital de salinidad: ");
   Serial.println(adc0, DEC);
+
+  //Calibrado del sensor
+  float salinidadReal = 288 + 33.067*salinidad - 2.92*pow(salinidad, 2) + 0.0853*pow(salinidad, 3);
+
   Serial.print("Salinidad = ");
-  Serial.println(salinidad, 2); // Ajusta el número de decimales según tus necesidades
+  Serial.println(salinidadReal, 2); // Ajusta el número de decimales según tus necesidades
   delay(1000); // Puedes ajustar el tiempo de espera entre lecturas
 }
