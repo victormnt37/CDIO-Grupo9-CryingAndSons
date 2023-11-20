@@ -28,7 +28,11 @@ int MaxSensor = 650;   // valor en mojado
 //
 String listaDeSensores[] = { "Nada Conectado", "Termometro", "Sensor de Humedad", "Sensor de Salinidad", "Sensor de PH" };
 String Pin0, Pin1, Pin2, Pin3, Pin4;
-
+String listaPines[] = {Pin0, Pin1, Pin2, Pin3, Pin4};//se autoactualiza?
+float ListTemp[10]={8000};
+int ListHum[10]={8000};
+float ListSal[10]={8000};
+float ListPH[10]={8000};
 
 #define power_pin 5  // Pin para alimentar el sensor de salinidad
 
@@ -98,7 +102,7 @@ void leerUltimaSonda() {
   Pin4 = listaDeSensores[0];
 }
 void infoSonda() {
-  Serial.println("Sensores de la Sonda:");
+  Serial.println("Sensores de la Sonda conectados a ADS:");
   Serial.println("Pin 0 ADS" + Pin0);
   Serial.println("Pin 1 ADS" + Pin1);
   Serial.println("Pin 2 ADS" + Pin2);
@@ -111,6 +115,24 @@ void loop() {
   int humedad = medirHumedad(0);
   float temperatura = tomarTemperatura(1);
   float salinidad = medirSalinidad();
+
+  for (int i = 0; i <= 4; ++i) {
+    // Construir el nombre del pin
+    String pinActual =listaPines[i];//sonda del pin
+    // Realizar acciones según el valor de la variable Pin
+    if (pinActual == listaDeSensores[1]) {//temperatura
+      ListTemp[i]=tomarTemperatura(i);//falta eliminar valores 8000
+    } else if (pinActual  == listaDeSensores[2]) {//Humedad
+      ListHum[i]=medirHumedad(i);//falta eliminar valores 8000
+    } else if (pinActual  == listaDeSensores[3]) {//Salinidad
+      //no esta en el ads, pin analogico
+      ListSal[i]=medirSalinidad();//falta eliminar valores 8000
+    }else if (pinActual  == listaDeSensores[4]) {//PH
+    
+    }else {
+      //pin sin nada o sonda no contemplada
+    }
+  }
 
   Serial.println("Humedad: " + humedad + "%");
   Serial.println("Temperatura: " + temperatura + "Cº");
