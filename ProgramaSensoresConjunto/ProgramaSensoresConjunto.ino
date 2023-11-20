@@ -1,8 +1,7 @@
 #include <Adafruit_ADS1X15.h>
 #include <Wire.h>
 
-Adafruit_ADS1015 ads;   // Instancia de Adafruit_ADS1015 para Humedad
-Adafruit_ADS1115 ads2;  // Instancia de Adafruit_ADS1115 para Temperatura
+Adafruit_ADS1015 ads;  // Instancia de Adafruit_ADS1015
 
 // Inicialización variables Temperatura
 
@@ -24,25 +23,57 @@ int MaxSensor = 650;   // valor en mojado
 
 // Inicialización variables salinidad
 
+// Iniciacion de variables de pines
+// Num en Pin = Tipo de sensor
+//
+String listaDeSensores[] = { "Nada Conectado", "Termometro", "Sensor de Humedad", "Sensor de Salinidad", "Sensor de PH" };
+String Pin0, Pin1, Pin2, Pin3, Pin4;
+
+
 #define power_pin 5  // Pin para alimentar el sensor de salinidad
 
 void setup() {
   Serial.begin(115200);
   Serial.println("Programa de lectura de NTC con ESP8266 y ADS1115");
 
-  // Inicializar el ADC para la humedad
-  if (!ads.begin()) {
+  if (!ads.begin()) {  // Inicializar el ADC para la humedad
     Serial.println("No se pudo inicializar el ADC del primer programa.");
     while (1)
       ;
   }
+  ads.setGain(GAIN_ONE);  // Inicializar el ADC para la temperatura
+  ads.begin();
+  pinMode(power_pin, OUTPUT);  // Inicialixar el pin mode para salinidad
 
-  // Inicializar el ADC para la temperatura
-  ads2.setGain(GAIN_ONE);
-  ads2.begin();
+  //Menu de inicializado
+  delay(1000);
+  leerUltimaSonda();
+  infoSonda();
+  bool configurar = true;
+  while (configurar) {
+    Serial.println("¿Deseas cambiar la configuracion de la sonda? (S/N)");
+    String input = Serial.readStringUntil('\n');
+    if (input == "S" || input == "s") {
+      //Declarar que pin es cada cosa
+    } else if (input == "N" || input == "n") {
+      configurar = false;
+    } else {
+      Serial.println("Opcion no valida");
+    }
+  }
+  bool calibrar = true;
+  while (calibrar) {
+    Serial.println("¿Deseas calibrar algun sensor de la sonda? (S/N)");
+    String input = Serial.readStringUntil('\n');
+    if (input == "S" || input == "s") {
+      //Calibracion de sensores
+    } else if (input == "N" || input == "n") {
+      calibrar = false;
+    } else {
+      Serial.println("Opcion no valida");
+    }
+  }
 
-  // Inicialixar el pin mode para salinidad
-  pinMode(power_pin, OUTPUT);
 
   // Pedir al usuario que ajuste los valores de mapeo para la humedad
   // Serial.println("¿Deseas ajustar los valores de mapeo para la humedad? (Si/No)");
@@ -59,23 +90,38 @@ void setup() {
   //   MaxSensor = sensorValue - 10;
   // }
 }
+void leerUltimaSonda() {
+  Pin0 = listaDeSensores[0];
+  Pin1 = listaDeSensores[0];
+  Pin2 = listaDeSensores[0];
+  Pin3 = listaDeSensores[0];
+  Pin4 = listaDeSensores[0];
+}
+void infoSonda() {
+  Serial.println("Sensores de la Sonda:");
+  Serial.println("Pin 0 ADS" + Pin0);
+  Serial.println("Pin 1 ADS" + Pin1);
+  Serial.println("Pin 2 ADS" + Pin2);
+  Serial.println("Pin 3 ADS" + Pin3);
+  Serial.println("Pin 4 ADS" + Pin4);
+}
 
 void loop() {
   // Llamar a las funciones de los dos programas
-  int humedad = medirHumedad();
-  float temperatura = tomarTemperatura();
+  int humedad = medirHumedad(0);
+  float temperatura = tomarTemperatura(1);
   float salinidad = medirSalinidad();
 
-  Serial.println("Humedad: " + humedad +"%");
+  Serial.println("Humedad: " + humedad + "%");
   Serial.println("Temperatura: " + temperatura + "Cº");
-  Serial.println("Salinidad: " + salinidad );
+  Serial.println("Salinidad: " + salinidad);
   Serial.println("______________________________________________");
 
   delay(1000);
 }
 
-int medirHumedad() {
-  sensorValue = ads.readADC_SingleEnded(0);
+int medirHumedad(int Pin) {
+  sensorValue = ads.readADC_SingleEnded(Pin);
   // Convertir el valor leído del sensor a un valor de humedad en porcentaje (ajustar según las especificaciones del sensor).map(sensorValue,950, 440, 0, 100);
   HValue1 = map(sensorValue, MinSensor, MaxSensor, 0, 100);
   delay(250);
@@ -95,8 +141,8 @@ int medirHumedad() {
   // delay(1000);
 }
 
-float tomarTemperatura() {
-  float rawValue = ads2.readADC_SingleEnded(1);
+float tomarTemperatura(int Pin) {
+  float rawValue = ads2.readADC_SingleEnded(Pin);
   float Volt = (rawValue / 32767) * 4.096;
   float T = ((Volt - B) / m) - 0.77;
   return T;
