@@ -31,11 +31,13 @@ void loop() {
   static float voltage;
 
   if (millis() - samplingTime > samplingInterval) {
-    // realizar una lectura del ADS11115
-    pHArray[pHArrayIndex++] = ads.readADC_SingleEnded(channelValue); // TO-DO: Realizar la lectura del canal del ADS1115
-    if (pHArrayIndex == ArrayLength) pHArrayIndex = 0;
-    // convertir la tectura en tensión
-    voltage = (float)pHArray[pHArrayIndex] * 5.0 / 32767.0; // TO-DO: Convertir la lectura a tensión
+    // realizar varias lecturas del ADS11115
+    for (int i = 0; i < ArrayLength; i++) {
+      pHArray[i] = ads.readADC_SingleEnded(channelValue);
+      delay(2); // espera pequeña entre lecturas para estabilizar
+    }
+    // calcular la media de las muestras
+    voltage = averageSample(ArrayLength, pHArray) * 5.0 / 32767.0;
     pHValue = 3.5 * voltage + Offset;
     samplingTime = millis();
   }
