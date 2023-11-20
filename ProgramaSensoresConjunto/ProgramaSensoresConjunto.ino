@@ -28,11 +28,11 @@ int MaxSensor = 650;   // valor en mojado
 //
 String listaDeSensores[] = { "Nada Conectado", "Termometro", "Sensor de Humedad", "Sensor de Salinidad", "Sensor de PH" };
 String Pin0, Pin1, Pin2, Pin3, Pin4;
-String listaPines[] = {Pin0, Pin1, Pin2, Pin3, Pin4};//se autoactualiza?
-float ListTemp[10]={8000};
-int ListHum[10]={8000};
-float ListSal[10]={8000};
-float ListPH[10]={8000};
+String listaPines[] = { Pin0, Pin1, Pin2, Pin3, Pin4 };  //se autoactualiza?
+float ListTemp[10] = { 8000 };
+// int ListHum[10]={8000};
+// float ListSal[10]={8000}; NO SALINIDAD por solo haber un unico lector Analogico
+float ListPH[10] = { 8000 };
 
 #define power_pin 5  // Pin para alimentar el sensor de salinidad
 
@@ -59,40 +59,94 @@ void setup() {
     String input = Serial.readStringUntil('\n');
     if (input == "S" || input == "s") {
       //Declarar que pin es cada cosa
+      Serial.println("¿Que pin de ADS quieres cambiar? (0-4)");
+      String ChangePin = Serial.readStringUntil('\n');
+
+      if (ChangePin >= 0 && ChangePin <= 4) {  //comprobar si pin es valido
+        Serial.println("¿Que sensor hay?");
+        for (int i = 0; i < sizeof(listaDeSensores) / sizeof(listaDeSensores[0]); ++i) {
+          Serial.println(listaDeSensores[i]);
+        }
+        String NewSensor = Serial.readStringUntil('\n');
+        bool sensorValido = false;
+
+        for (int i = 0; i < sizeof(listaDeSensores) / sizeof(listaDeSensores[0]); ++i) {  //comprovar si el sensor existe
+          if (NewSensor.equalsIgnoreCase(listaDeSensores[i])) {
+            sensorValido = true;
+            break;
+          }
+        }
+
+        if (sensorValido) {
+          //aplicar cambio, pin ChangePin, Sensor NewSensor
+          if (PinChange == 0) {
+            Pin0 = NewSensor;
+          } else if (PinChange == 1) {
+            Pin1 = NewSensor;
+          } else if (PinChange == 2) {
+            Pin2 = NewSensor;
+          } else if (PinChange == 3) {
+            Pin3 = NewSensor;
+          } else if (PinChange == 4) {
+            Pin4 = NewSensor;
+          }
+          infoSonda();
+        } else {
+          Serial.println("Opcion de Sensor no valida");
+        }
+
+      } else {
+        Serial.println("Opcion de Pin no valida");
+      }
+
     } else if (input == "N" || input == "n") {
       configurar = false;
     } else {
       Serial.println("Opcion no valida");
     }
   }
+
   bool calibrar = true;
   while (calibrar) {
     Serial.println("¿Deseas calibrar algun sensor de la sonda? (S/N)");
     String input = Serial.readStringUntil('\n');
     if (input == "S" || input == "s") {
       //Calibracion de sensores
+      Serial.println("¿Qué sensor deseas calibrar? (Temperatura/Humedad/Salinidad)");
+      String sensorInput = Serial.readStringUntil('\n');
+
+      if (sensorInput.equalsIgnoreCase("Temperatura")) {
+        // Calibración de temperatura
+        Serial.println("Calibración de temperatura...");
+        // Aquí puedes agregar la lógica específica de calibración para la temperatura
+      } else if (sensorInput.equalsIgnoreCase("Humedad")) {
+        // Calibración de humedad
+        Serial.println("Calibración de humedad...");
+        // Aquí puedes agregar la lógica específica de calibración para la humedad
+
+        //CALIBRACION DE HUMEDAD SIMPLE
+        // if (input == "Si" || input == "si") {
+        //   Serial.println("Ponga el sensor en SECO y pulse enter para registrar el nuevo valor...");
+        //   while (Serial.read() != '\n') {}
+        //   sensorValue = ads.readADC_SingleEnded(0);
+        //   MinSensor = sensorValue + 10;
+        //   Serial.println("Ponga el sensor en MOJADO y pulse enter para registrar el nuevo valor...");
+        //   while (Serial.read() != '\n') {}
+        //   sensorValue = ads.readADC_SingleEnded(0);
+        //   MaxSensor = sensorValue - 10;
+      } else if (sensorInput.equalsIgnoreCase("Salinidad")) {
+        // Calibración de salinidad
+        Serial.println("Calibración de salinidad...");
+        // Aquí puedes agregar la lógica específica de calibración para la salinidad
+      } else {
+        Serial.println("Sensor no válido para calibración.");
+      }
     } else if (input == "N" || input == "n") {
       calibrar = false;
     } else {
       Serial.println("Opcion no valida");
     }
   }
-
-
-  // Pedir al usuario que ajuste los valores de mapeo para la humedad
-  // Serial.println("¿Deseas ajustar los valores de mapeo para la humedad? (Si/No)");
-  // while (!Serial.available()) {}
-  // String input = Serial.readStringUntil('\n');
-  // if (input == "Si" || input == "si") {
-  //   Serial.println("Ponga el sensor en SECO y pulse enter para registrar el nuevo valor...");
-  //   while (Serial.read() != '\n') {}
-  //   sensorValue = ads.readADC_SingleEnded(0);
-  //   MinSensor = sensorValue + 10;
-  //   Serial.println("Ponga el sensor en MOJADO y pulse enter para registrar el nuevo valor...");
-  //   while (Serial.read() != '\n') {}
-  //   sensorValue = ads.readADC_SingleEnded(0);
-  //   MaxSensor = sensorValue - 10;
-  // }
 }
 void leerUltimaSonda() {
   Pin0 = listaDeSensores[0];
@@ -111,31 +165,43 @@ void infoSonda() {
 }
 
 void loop() {
-  // Llamar a las funciones de los dos programas
-  int humedad = medirHumedad(0);
-  float temperatura = tomarTemperatura(1);
-  float salinidad = medirSalinidad();
-
   for (int i = 0; i <= 4; ++i) {
     // Construir el nombre del pin
-    String pinActual =listaPines[i];//sonda del pin
+    String pinActual = listaPines[i];  //sonda del pin
     // Realizar acciones según el valor de la variable Pin
-    if (pinActual == listaDeSensores[1]) {//temperatura
-      ListTemp[i]=tomarTemperatura(i);//falta eliminar valores 8000
-    } else if (pinActual  == listaDeSensores[2]) {//Humedad
-      ListHum[i]=medirHumedad(i);//falta eliminar valores 8000
-    } else if (pinActual  == listaDeSensores[3]) {//Salinidad
+    if (pinActual == listaDeSensores[1]) {         //temperatura
+      ListTemp[i] = tomarTemperatura(i);           //falta eliminar valores 8000
+    } else if (pinActual == listaDeSensores[2]) {  //Humedad
+      ListHum[i] = medirHumedad(i);                //falta eliminar valores 8000
+    } else if (pinActual == listaDeSensores[3]) {  //Salinidad
       //no esta en el ads, pin analogico
-      ListSal[i]=medirSalinidad();//falta eliminar valores 8000
-    }else if (pinActual  == listaDeSensores[4]) {//PH
-    
-    }else {
+      //ListSal[i]=medirSalinidad();//falta eliminar valores 8000
+      float salinidad = medirSalinidad();
+    } else if (pinActual == listaDeSensores[4]) {  //PH
+
+    } else {
       //pin sin nada o sonda no contemplada
     }
   }
-
-  Serial.println("Humedad: " + humedad + "%");
-  Serial.println("Temperatura: " + temperatura + "Cº");
+  //Imprimir Temperatura
+  for (int i = 0; i < sizeof(ListTemp) / sizeof(ListTemp[0]); ++i) {
+    // Verificar si el valor es diferente de 8000 antes de imprimir
+    if (ListTemp[i] != 8000) {
+      Serial.print("Temperatura: ");
+      Serial.print(ListTemp[i]);
+      Serial.println("Cº");
+      //mandar add al string a enviar
+    }
+  }
+  for (int i = 0; i < sizeof(ListHum) / sizeof(ListHum[0]); ++i) {
+    // Verificar si el valor es diferente de 8000 antes de imprimir
+    if (ListHum[i] != 8000) {
+      Serial.print("Humedad: ");
+      Serial.print(ListHum[i]);
+      Serial.println("%");
+      //mandar add al string a enviar
+    }
+  }
   Serial.println("Salinidad: " + salinidad);
   Serial.println("______________________________________________");
 
@@ -146,21 +212,13 @@ int medirHumedad(int Pin) {
   sensorValue = ads.readADC_SingleEnded(Pin);
   // Convertir el valor leído del sensor a un valor de humedad en porcentaje (ajustar según las especificaciones del sensor).map(sensorValue,950, 440, 0, 100);
   HValue1 = map(sensorValue, MinSensor, MaxSensor, 0, 100);
-  delay(250);
   HValue2 = map(sensorValue, MinSensor, MaxSensor, 0, 100);
-  delay(250);
   HValue3 = map(sensorValue, MinSensor, MaxSensor, 0, 100);
-  delay(250);
   HValue4 = map(sensorValue, MinSensor, MaxSensor, 0, 100);
-  delay(250);
   HValue5 = map(sensorValue, MinSensor, MaxSensor, 0, 100);
   Serial.println(sensorValue);
   int Media = (HValue1 + HValue2 + HValue3 + HValue4 + HValue5) / 5;
   return Media;
-  //   Serial.print("Medición de humedad: ");
-  // Serial.print(Media);
-  // Serial.println("%");
-  // delay(1000);
 }
 
 float tomarTemperatura(int Pin) {
@@ -168,12 +226,6 @@ float tomarTemperatura(int Pin) {
   float Volt = (rawValue / 32767) * 4.096;
   float T = ((Volt - B) / m) - 0.77;
   return T;
-  // Serial.print("Lectura de temperatura: ");
-  // Serial.print(rawValue);
-  // Serial.print(" Volt: ");
-  // Serial.print(Volt);
-  // Serial.print(" Temp: ");
-  // Serial.println(T);
 }
 
 float medirSalinidad() {
@@ -181,25 +233,12 @@ float medirSalinidad() {
   float salinidad;
   // Alimentamos la sonda con un tren de pulsos
   digitalWrite(power_pin, HIGH);
-  delay(100);
-
   // leemos cuando hay un nivel alto
   adc0 = analogRead(A0);
   digitalWrite(power_pin, LOW);
-  delay(100);
-
   // Realizamos el cálculo de la salinidad
   salinidad = map(adc0, 0, 1023, 0, 500);  // Ajustar rango de mapeo
-
-  // // presentamos lectura
-  // Serial.print("Lectura digital de salinidad: ");
-  // Serial.println(adc0, DEC);
-
   //Calibrado del sensor
   float salinidadReal = 288 + 33.067 * salinidad - 2.92 * pow(salinidad, 2) + 0.0853 * pow(salinidad, 3);
   return salinidadReal;
-
-  // Serial.print("Salinidad = ");
-  // Serial.println(salinidadReal, 2); // Ajusta el número de decimales según tus necesidades
-  // delay(1000); // Puedes ajustar el tiempo de espera entre lecturas
 }
