@@ -10,7 +10,7 @@ int pHArray[ArrayLength]; // almacena las muestras
 int pHArrayIndex = 0;
 
 // Construimos el ADS1115
-Adafruit_ADS1115 ads; // TO-DO: Instanciar el objeto de la clase Adafruit_ADS1115
+Adafruit_ADS1115 ads;
 
 void setup() {
   // Inicializamos el monitor serie
@@ -18,10 +18,10 @@ void setup() {
   Serial.println("Inicializando el medidor de PH");
 
   // Inicializamos el ADS1115
-  ads.begin(); // TO-DO: Inicializar el objeto ADS1115
+  ads.begin();
 
   // Configuramos la ganancia del ADS1115
-  ads.setGain(GAIN_ONE); // TO-DO: Configurar la ganancia del ADS1115
+  ads.setGain(GAIN_ONE);
 }
 
 void loop() {
