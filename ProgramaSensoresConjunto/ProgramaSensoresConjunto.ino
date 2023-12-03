@@ -21,7 +21,13 @@ int HValue5 = 0;
 int MinSensor = 1300;  // valor en seco
 int MaxSensor = 650;   // valor en mojado
 
-// Inicialización variables salinidad
+// Inicialización variables PH
+#define channelValue 0
+#define Offset 0.00
+#define samplingInterval 20
+#define ArrayLength 40 // numero de muestras
+int pHArray[ArrayLength]; // almacena las muestras
+int pHArrayIndex = 0;
 
 // Iniciacion de variables de pines
 // Num en Pin = Tipo de sensor
@@ -36,6 +42,7 @@ float ListPH[10] = { 8000 };
 
 #define power_pin 5  // Pin para alimentar el sensor de salinidad
 
+// ****************************** Definición de funciones ******************************
 
 void leerUltimaSonda() {
   Pin0 = listaDeSensores[2];
@@ -85,6 +92,37 @@ float medirSalinidad() {
   float salinidadReal = 288 + 33.067 * salinidad - 2.92 * pow(salinidad, 2) + 0.0853 * pow(salinidad, 3);
   return salinidadReal;
 }
+
+float medirPH() {
+  static unsigned long samplingTime = millis();
+  static unsigned long printTime = millis();
+  static float phValue;
+  static float voltage;
+
+  if (millis() - samplingTime > samplingInterval) {
+    // realizar varias lecturas del ADS11115
+    for (int i = 0; i < ArrayLength; i++) {
+      pHArray[i] = ads.readADC_SingleEnded(channelValue);
+      delay(2); // espera pequeña entre lecturas para estabilizar
+    }
+    // calcular la media de las muestras
+    voltage = averageSample(ArrayLength, pHArray) * 5.0 / 32767.0;
+    pHValue = 3.5 * voltage + Offset;
+    samplingTime = millis();
+  }
+
+  if (millis() - printTime > printInterval) {
+    // Cada printTime segundos se escribe un dato en pantalla
+    Serial.print("Voltage: ");
+    Serial.print(voltage, 2);
+    Serial.print("    pH value: ");
+    Serial.println(pHValue, 2);
+    printTime = millis();
+  }
+}
+
+// ****************************** Definición de funciones ******************************
+
 void setup() {
   Serial.begin(115200);
   Serial.println("Programa de lectura de NTC con ESP8266 y ADS1115");
@@ -207,6 +245,9 @@ void setup() {
     }
   }
 }
+
+// ****************************** Loop ******************************
+
 void loop() {
   for (int i = 0; i <= 4; ++i) {
     // Construir el nombre del pin
@@ -247,6 +288,8 @@ void loop() {
   Serial.print("Salinidad: ");
   Serial.println(salinidad);
   Serial.println("______________________________________________");
+
+  medirPH();
 
   delay(1000);
 }
