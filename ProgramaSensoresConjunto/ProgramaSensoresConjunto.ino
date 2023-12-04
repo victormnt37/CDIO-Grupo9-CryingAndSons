@@ -25,6 +25,7 @@ int MaxSensor = 650;   // valor en mojado
 #define channelValue 0
 #define Offset 0.00
 #define samplingInterval 20
+#define printInterval 30
 #define ArrayLength 40 // numero de muestras
 int pHArray[ArrayLength]; // almacena las muestras
 int pHArrayIndex = 0;
@@ -35,10 +36,9 @@ int pHArrayIndex = 0;
 String listaDeSensores[] = { "Nada Conectado", "Termometro", "Sensor de Humedad", "Sensor de Luz", "Sensor de PH" };
 String Pin0, Pin1, Pin2, Pin3;
 String listaPines[] = { Pin0, Pin1, Pin2, Pin3 };  //se autoactualiza?
-float ListTemp[10] = { 8000 };
-int ListHum[10] = { 8000 };
-// float ListSal[10]={8000}; NO SALINIDAD por solo haber un unico lector Analogico
-float ListPH[10] = { 8000 };
+float ListTemp[] = { 8000, 8000, 8000, 8000 };
+int ListHum[] = { 8000, 8000, 8000, 8000 };
+float ListPH[] = { 8000, 8000, 8000, 8000 };
 
 #define power_pin 5  // Pin para alimentar el sensor de salinidad
 
@@ -66,8 +66,9 @@ int medirHumedad(int Pin) {
   HValue3 = map(sensorValue, MinSensor, MaxSensor, 0, 100);
   HValue4 = map(sensorValue, MinSensor, MaxSensor, 0, 100);
   HValue5 = map(sensorValue, MinSensor, MaxSensor, 0, 100);
-  Serial.println(sensorValue);
   int Media = (HValue1 + HValue2 + HValue3 + HValue4 + HValue5) / 5;
+  Serial.print("Hum: ");
+  Serial.println(Media);
   return Media;
 }
 
@@ -75,6 +76,8 @@ float tomarTemperatura(int Pin) {
   float rawValue = ads.readADC_SingleEnded(Pin);
   float Volt = (rawValue / 32767) * 4.096;
   float T = ((Volt - B) / m) - 0.77;
+  Serial.print("Temperatura: ");
+  Serial.println(T);
   return T;
 }
 
@@ -93,16 +96,24 @@ float medirSalinidad() {
   return salinidadReal;
 }
 
-float medirPH() {
+float averageSample(int numSamples, int* samples) {
+  float sum = 0.0;
+  for (int i = 0; i < numSamples; i++) {
+    sum += samples[i];
+  }
+  return sum / numSamples;
+}
+
+float medirPH(int pin) {
   static unsigned long samplingTime = millis();
   static unsigned long printTime = millis();
-  static float phValue;
+  static float pHValue;
   static float voltage;
 
   if (millis() - samplingTime > samplingInterval) {
     // realizar varias lecturas del ADS11115
     for (int i = 0; i < ArrayLength; i++) {
-      pHArray[i] = ads.readADC_SingleEnded(channelValue);
+      pHArray[i] = ads.readADC_SingleEnded(pin);
       delay(2); // espera pequeña entre lecturas para estabilizar
     }
     // calcular la media de las muestras
@@ -113,15 +124,16 @@ float medirPH() {
 
   if (millis() - printTime > printInterval) {
     // Cada printTime segundos se escribe un dato en pantalla
-    Serial.print("Voltage: ");
-    Serial.print(voltage, 2);
+    // Serial.print("Voltage: ");
+    // Serial.print(voltage, 2);
     Serial.print("    pH value: ");
-    Serial.println(pHValue, 2);
+     Serial.println(pHValue, 2);
     printTime = millis();
   }
+  return pHValue;
 }
 
-// ****************************** Definición de funciones ******************************
+// ****************************** Setup ******************************
 
 void setup() {
   Serial.begin(115200);
@@ -141,7 +153,7 @@ void setup() {
   leerUltimaSonda();
   infoSonda();
 
-  bool configurar = true;
+  bool configurar = false;
   while (configurar) {
     Serial.println("¿Deseas cambiar la configuracion de la sonda? (S/N)");
 
@@ -203,7 +215,7 @@ void setup() {
       delay(10000);
     }
   }
-  bool calibrar = true;
+  bool calibrar = false;
   while (calibrar) {
     Serial.println("¿Deseas calibrar algun sensor de la sonda? (S/N)");
     String input = Serial.readStringUntil('\n');
@@ -249,11 +261,11 @@ void setup() {
 // ****************************** Loop ******************************
 
 void loop() {
-  for (int i = 0; i <= 4; ++i) {
+  for (int i = 0; i <= 3; ++i) {
     // Construir el nombre del pin
     String pinActual = listaPines[i];  //sonda del pin
     // Realizar acciones según el valor de la variable Pin
-    if (pinActual == listaDeSensores[1]) {         //temperatura
+    if (pinActual == listaDeSensores[1]) {         //temperatura //TO-DO: Se estan comparando dos strings q no tienen sentido comparar "pin0 con Termometro"
       ListTemp[i] = tomarTemperatura(i);           //falta eliminar valores 8000
     } else if (pinActual == listaDeSensores[2]) {  //Humedad
       ListHum[i] = medirHumedad(i);                //falta eliminar valores 8000
@@ -261,6 +273,7 @@ void loop() {
       //ListSal[i]=luz();//falta eliminar valores 8000
     } else if (pinActual == listaDeSensores[4]) {  //PH
       //Lista de ph
+      ListPH[i] = medirPH(i);
     } else {
       //pin sin nada o sonda no contemplada
     }
@@ -287,9 +300,17 @@ void loop() {
   }
   Serial.print("Salinidad: ");
   Serial.println(salinidad);
+  for (int i = 0; i < sizeof(ListPH) / sizeof(ListPH[0]); ++i) {
+    // Verificar si el valor es diferente de 8000 antes de imprimir
+    if (ListHum[i] != 8000) {
+      Serial.print("PH: ");
+      Serial.print(ListPH[i]);
+      Serial.println("ph");
+      //mandar add al string a enviar
+    }
+  }
   Serial.println("______________________________________________");
 
-  medirPH();
 
   delay(1000);
 }
