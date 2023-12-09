@@ -1,6 +1,6 @@
 # CDIO-Grupo9-CryingAndSons
 
-Se ha desarrollado un circuito con tres sensores, humedad, temperatura y salinidad.
+Se ha desarrollado un circuito con sensores de humedad, temperatura, salinidad, PH, luz y localización GPS.
 Para realizar las mediciones de este circuito se han desarrollado el código disponible en este repositorio.
 
 Inicialmente se programaron las funciones por separado, las cuales se pueden encontrar en las carpetas practicaHumedad, practicaTemperatura y practicaSalinidad.
