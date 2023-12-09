@@ -8,4 +8,4 @@ Una vez testeados y calibrados se hizo una unión de todos estos para entregar u
 
 Víctor Morant Faus, Manuel Pérez García, Nuria Wagner LLorens, Pablo Alejandro Chasi Cajamarca & Jorge Felipe Alonso Diana
 
-1º de GTI - Sprint 1 CDIO
+1º de GTI
