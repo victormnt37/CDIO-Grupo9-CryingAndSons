@@ -35,10 +35,13 @@ int pHArrayIndex = 0;
 String listaDeSensores[] = { "Nada Conectado", "Termometro", "Sensor de Humedad", "Sensor de Luz", "Sensor de PH" };
 String Pin0, Pin1, Pin2, Pin3;
 String listaPines[] = { Pin0, Pin1, Pin2, Pin3 };  //se autoactualiza?
+<<<<<<< Updated upstream
 float ListTemp[10] = { 8000 };
 int ListHum[10] = { 8000 };
 // float ListSal[10]={8000}; NO SALINIDAD por solo haber un unico lector Analogico
 float ListPH[10] = { 8000 };
+=======
+>>>>>>> Stashed changes
 
 #define power_pin 5  // Pin para alimentar el sensor de salinidad
 
@@ -120,8 +123,101 @@ float medirPH() {
     printTime = millis();
   }
 }
+int buscarPosicion(String sensor) {
+  bool encontrado = false;
+  // Variable para almacenar la posición del string (si se encuentra)
+  int posicion = -1;
+  // Buscar el string en la lista
+  for (int i = 0; i < sizeof(listaDeSensores) / sizeof(listaDeSensores[0]); ++i) {
+    if (lista[i] == sensor) {
+      encontrado = true;
+      posicion = i;
+      break;  // Salir del bucle cuando se encuentra el string
+    }
+  }
+  //if si no encuentra (encontrado = false)
+  return posicion;
+}
+void calibrar(string sensor, int pin) {
 
-// ****************************** Definición de funciones ******************************
+  int listnum = buscarPosicion(sensor);  //termometro
+  if (valor == 0) {
+    // Nada Conectado
+    Serial.println("Nada conectado");
+    break;
+  } else if (valor == 1) {
+    // Calibrar Termometro
+    break;
+  } else if (valor == 2) {
+    // Calibrar Sensor de Humedad
+    break;
+  } else if (valor == 3) {
+    // Calibrar Sensor de Luz
+    break;
+  } else if (valor == 4) {
+    // Calibrar Sensor de PH
+    break;
+  } else {
+    Serial.println("Sensor no reconocido/no listado");
+    break;
+  }
+}
+void exeMenuCalibracion() {
+  int seleccion;
+  int valorSensor;
+
+  while (true) {
+    // Mostrar las opciones del menú
+    Serial.println("Seleccione una opción:");
+    Serial.println("1. Calibrar sensor pin 1");
+    Serial.println("2. Calibrar sensor pin 2");
+    Serial.println("3. Calibrar sensor pin 3");
+    Serial.println("4. Calibrar sensor pin 4");
+    Serial.println("5. Salir del menú");
+
+    // Leer la selección del usuario
+    while (!Serial.available()) {
+      // Esperar a que el usuario ingrese datos
+    }
+    seleccion = Serial.parseInt();
+
+    // Realizar la acción según la selección
+    switch (seleccion) {
+      case 1:
+        Serial.println("Pin 0:");
+        Serial.println(Pin0);
+        int numpin = 0;
+        calibrar(Pin0, numpin);
+        break;
+
+      case 2:
+        Serial.println("Pin 1");
+        Serial.println(Pin1);
+        int numpin = 1;
+        calibrar(Pin1, numpin);
+        break;
+      case 3:
+        Serial.println("Pin 2");
+        Serial.println(Pin2);
+        int numpin = 2;
+        calibrar(Pin2, numpin);
+        break;
+      case 4:
+        Serial.println("Pin 3");
+        Serial.println(Pin3);
+        int numpin = 3;
+        calibrar(Pin3, numpin);
+        break;
+      case 5:
+        Serial.println("Salir");
+        return;  // Salir del bucle y, por lo tanto, del menú
+      default:
+        Serial.println("Opción no válida. Inténtelo de nuevo.");
+        break;
+    }
+  }
+}
+// ****************************** SETUP ******************************
 
 void setup() {
   Serial.begin(115200);
@@ -140,156 +236,44 @@ void setup() {
   delay(1000);
   leerUltimaSonda();
   infoSonda();
+  
+  // Preguntar al usuario si desea ejecutar el menú
+  Serial.println("¿Desea ejecutar el menú? (y/n)");
 
-  bool configurar = true;
-  while (configurar) {
-    Serial.println("¿Deseas cambiar la configuracion de la sonda? (S/N)");
-
-    if (Serial.available() > 1) {
-      String input = Serial.readStringUntil('\n');
-      if (input == "S" || input == "s") {
-        //Declarar que pin es cada cosa
-        Serial.println("¿Que pin de ADS quieres cambiar? (0-4)");
-        if (Serial.available() > 1) {
-          String ChangePin = Serial.readStringUntil('\n');
-
-          int pinValue = ChangePin.toInt();  // Convertir la cadena de texto a un entero
-
-          if (pinValue >= 0 && pinValue <= 3) {  //comprobar si pin es valido
-            Serial.println("¿Que sensor hay?");
-            for (int i = 0; i < sizeof(listaDeSensores) / sizeof(listaDeSensores[0]); ++i) {
-              Serial.println(listaDeSensores[i]);
-            }
-            String NewSensor = Serial.readStringUntil('\n');
-            bool sensorValido = false;
-
-            for (int i = 0; i < sizeof(listaDeSensores) / sizeof(listaDeSensores[0]); ++i) {  //comprovar si el sensor existe
-              if (NewSensor.equalsIgnoreCase(listaDeSensores[i])) {
-                sensorValido = true;
-                break;
-              }
-            }
-
-            if (sensorValido) {
-              //aplicar cambio, pin ChangePin, Sensor NewSensor
-              if (pinValue == 0) {
-                Pin0 = NewSensor;
-              } else if (pinValue == 1) {
-                Pin1 = NewSensor;
-              } else if (pinValue == 2) {
-                Pin2 = NewSensor;
-              } else if (pinValue == 3) {
-                Pin3 = NewSensor;
-                infoSonda();
-              } else {
-                Serial.println("Opcion de Sensor no valida");
-              }
-
-            } else {
-              Serial.println("Opcion de Pin no valida");
-            }
-          } else {
-            delay(10000);
-          }
-
-
-        } else if (input == "N" || input == "n") {
-          configurar = false;
-        } else {
-          Serial.println("Opcion no valida");
-        }
-      }
-    } else {
-      delay(10000);
-    }
+  while (!Serial.available()) {
+    // Esperar a que el usuario ingrese datos
   }
-  bool calibrar = true;
-  while (calibrar) {
-    Serial.println("¿Deseas calibrar algun sensor de la sonda? (S/N)");
-    String input = Serial.readStringUntil('\n');
-    if (input == "S" || input == "s") {
-      //Calibracion de sensores
-      Serial.println("¿Qué sensor deseas calibrar? (Temperatura/Humedad/Luz)");
-      String sensorInput = Serial.readStringUntil('\n');
 
-      if (sensorInput.equalsIgnoreCase("Temperatura")) {
-        // Calibración de temperatura
-        Serial.println("Calibración de temperatura...");
-        // Aquí puedes agregar la lógica específica de calibración para la temperatura
-      } else if (sensorInput.equalsIgnoreCase("Humedad")) {
-        // Calibración de humedad
-        Serial.println("Calibración de humedad...");
-        // Aquí puedes agregar la lógica específica de calibración para la humedad
+  char respuesta = Serial.read();
 
-        //CALIBRACION DE HUMEDAD SIMPLE
-        // if (input == "Si" || input == "si") {
-        //   Serial.println("Ponga el sensor en SECO y pulse enter para registrar el nuevo valor...");
-        //   while (Serial.read() != '\n') {}
-        //   sensorValue = ads.readADC_SingleEnded(0);
-        //   MinSensor = sensorValue + 10;
-        //   Serial.println("Ponga el sensor en MOJADO y pulse enter para registrar el nuevo valor...");
-        //   while (Serial.read() != '\n') {}
-        //   sensorValue = ads.readADC_SingleEnded(0);
-        //   MaxSensor = sensorValue - 10;
-      } else if (sensorInput.equalsIgnoreCase("Luz")) {
-        // Calibración de luz
-        Serial.println("Calibración de luz...");
-        // Aquí puedes agregar la lógica específica de calibración para la luz
-      } else {
-        Serial.println("Sensor no válido para calibración.");
-      }
-    } else if (input == "N" || input == "n") {
-      calibrar = false;
-    } else {
-      Serial.println("Opcion no valida");
-    }
+  if (respuesta == 'y' || respuesta == 'Y') {
+    // Ejecutar el menú si la respuesta es 'y' o 'Y'
+    exeMenuCalibracion();
+  } else {
+    Serial.println("Iniciando.");
   }
+
 }
 
 // ****************************** Loop ******************************
 
 void loop() {
-  for (int i = 0; i <= 4; ++i) {
-    // Construir el nombre del pin
-    String pinActual = listaPines[i];  //sonda del pin
-    // Realizar acciones según el valor de la variable Pin
-    if (pinActual == listaDeSensores[1]) {         //temperatura
-      ListTemp[i] = tomarTemperatura(i);           //falta eliminar valores 8000
-    } else if (pinActual == listaDeSensores[2]) {  //Humedad
-      ListHum[i] = medirHumedad(i);                //falta eliminar valores 8000
-    } else if (pinActual == listaDeSensores[3]) {  //luz
-      //ListSal[i]=luz();//falta eliminar valores 8000
-    } else if (pinActual == listaDeSensores[4]) {  //PH
-      //Lista de ph
-    } else {
-      //pin sin nada o sonda no contemplada
-    }
-  }
+  //medir Temperatura y imprimir
+  Serial.print("Temperatura: ");
+  Serial.println(tomarTemperatura(1));//1=num pin de termometro, debuelve un float
+  //medir Salinidad y imprimir
   float salinidad = medirSalinidad();
-  //Imprimir Temperatura
-  for (int i = 0; i < sizeof(ListTemp) / sizeof(ListTemp[0]); ++i) {
-    // Verificar si el valor es diferente de 8000 antes de imprimir
-    if (ListTemp[i] != 8000) {
-      Serial.print("Temperatura: ");
-      Serial.print(ListTemp[i]);
-      Serial.println("Cº");
-      //mandar add al string a enviar
-    }
-  }
-  for (int i = 0; i < sizeof(ListHum) / sizeof(ListHum[0]); ++i) {
-    // Verificar si el valor es diferente de 8000 antes de imprimir
-    if (ListHum[i] != 8000) {
-      Serial.print("Humedad: ");
-      Serial.print(ListHum[i]);
-      Serial.println("%");
-      //mandar add al string a enviar
-    }
-  }
   Serial.print("Salinidad: ");
   Serial.println(salinidad);
-  Serial.println("______________________________________________");
-
-  medirPH();
-
-  delay(1000);
+  //medir humedad y imprimir
+  Serial.print("Humedad: ");
+  Serial.println(medirHumedad(0));//0=num pin de termometro, debuelve un int
+  //medir ph y imprimir
+  Serial.print("PH: ");
+  Serial.println(medirPH(2));//2=num pin de termometro, debuelve un float
+  //medir luz y imprimir
+  Serial.print("LUM: ");
+  Serial.println(medirLuz(3));//3=num pin de termometro, debuelve un float
+  Serial.println("______________________________________________");  delay(1000);
+  Serial.print("\033[2J\033[H");
 }
