@@ -10,8 +10,6 @@ float m = 0.034;
 float B = 0.784;
 
 // Inicialización variables Humedad
-
-int channelValue = 0;
 int sensorValue = 0;
 int HValue1 = 0;
 int HValue2 = 0;
@@ -22,7 +20,6 @@ int MinSensor = 1300;  // valor en seco
 int MaxSensor = 650;   // valor en mojado
 
 // Inicialización variables PH
-#define channelValue 0
 #define Offset 0.00
 #define samplingInterval 20
 #define ArrayLength 40 // numero de muestras
@@ -35,13 +32,6 @@ int pHArrayIndex = 0;
 String listaDeSensores[] = { "Nada Conectado", "Termometro", "Sensor de Humedad", "Sensor de Luz", "Sensor de PH" };
 String Pin0, Pin1, Pin2, Pin3;
 String listaPines[] = { Pin0, Pin1, Pin2, Pin3 };  //se autoactualiza?
-<<<<<<< Updated upstream
-float ListTemp[10] = { 8000 };
-int ListHum[10] = { 8000 };
-// float ListSal[10]={8000}; NO SALINIDAD por solo haber un unico lector Analogico
-float ListPH[10] = { 8000 };
-=======
->>>>>>> Stashed changes
 
 #define power_pin 5  // Pin para alimentar el sensor de salinidad
 
@@ -69,7 +59,6 @@ int medirHumedad(int Pin) {
   HValue3 = map(sensorValue, MinSensor, MaxSensor, 0, 100);
   HValue4 = map(sensorValue, MinSensor, MaxSensor, 0, 100);
   HValue5 = map(sensorValue, MinSensor, MaxSensor, 0, 100);
-  Serial.println(sensorValue);
   int Media = (HValue1 + HValue2 + HValue3 + HValue4 + HValue5) / 5;
   return Media;
 }
@@ -95,17 +84,24 @@ float medirSalinidad() {
   float salinidadReal = 288 + 33.067 * salinidad - 2.92 * pow(salinidad, 2) + 0.0853 * pow(salinidad, 3);
   return salinidadReal;
 }
+float averageSample(int numSamples, int* samples) {
+  float sum = 0.0;
+  for (int i = 0; i < numSamples; i++) {
+    sum += samples[i];
+  }
+  return sum / numSamples;
+}
 
-float medirPH() {
+float medirPH(int pin) {
   static unsigned long samplingTime = millis();
   static unsigned long printTime = millis();
-  static float phValue;
+  static float pHValue;
   static float voltage;
 
   if (millis() - samplingTime > samplingInterval) {
     // realizar varias lecturas del ADS11115
     for (int i = 0; i < ArrayLength; i++) {
-      pHArray[i] = ads.readADC_SingleEnded(channelValue);
+      pHArray[i] = ads.readADC_SingleEnded(pin);
       delay(2); // espera pequeña entre lecturas para estabilizar
     }
     // calcular la media de las muestras
@@ -113,15 +109,7 @@ float medirPH() {
     pHValue = 3.5 * voltage + Offset;
     samplingTime = millis();
   }
-
-  if (millis() - printTime > printInterval) {
-    // Cada printTime segundos se escribe un dato en pantalla
-    Serial.print("Voltage: ");
-    Serial.print(voltage, 2);
-    Serial.print("    pH value: ");
-    Serial.println(pHValue, 2);
-    printTime = millis();
-  }
+  return pHValue;
 }
 int buscarPosicion(String sensor) {
   bool encontrado = false;
@@ -129,7 +117,7 @@ int buscarPosicion(String sensor) {
   int posicion = -1;
   // Buscar el string en la lista
   for (int i = 0; i < sizeof(listaDeSensores) / sizeof(listaDeSensores[0]); ++i) {
-    if (lista[i] == sensor) {
+    if (listaDeSensores[i] == sensor) {
       encontrado = true;
       posicion = i;
       break;  // Salir del bucle cuando se encuentra el string
@@ -138,28 +126,22 @@ int buscarPosicion(String sensor) {
   //if si no encuentra (encontrado = false)
   return posicion;
 }
-void calibrar(string sensor, int pin) {
+void calibrar(String sensor, int pin) {
 
   int listnum = buscarPosicion(sensor);  //termometro
-  if (valor == 0) {
+  if (listnum == 0) {
     // Nada Conectado
     Serial.println("Nada conectado");
-    break;
-  } else if (valor == 1) {
+  } else if (listnum == 1) {
     // Calibrar Termometro
-    break;
-  } else if (valor == 2) {
+  } else if (listnum == 2) {
     // Calibrar Sensor de Humedad
-    break;
-  } else if (valor == 3) {
+  } else if (listnum == 3) {
     // Calibrar Sensor de Luz
-    break;
-  } else if (valor == 4) {
+  } else if (listnum == 4) {
     // Calibrar Sensor de PH
-    break;
   } else {
     Serial.println("Sensor no reconocido/no listado");
-    break;
   }
 }
 void exeMenuCalibracion() {
@@ -181,31 +163,32 @@ void exeMenuCalibracion() {
     }
     seleccion = Serial.parseInt();
 
+    int numpin = -1;
     // Realizar la acción según la selección
     switch (seleccion) {
       case 1:
         Serial.println("Pin 0:");
         Serial.println(Pin0);
-        int numpin = 0;
+        numpin = 0;
         calibrar(Pin0, numpin);
         break;
 
       case 2:
         Serial.println("Pin 1");
         Serial.println(Pin1);
-        int numpin = 1;
+        numpin = 1;
         calibrar(Pin1, numpin);
         break;
       case 3:
         Serial.println("Pin 2");
         Serial.println(Pin2);
-        int numpin = 2;
+        numpin = 2;
         calibrar(Pin2, numpin);
         break;
       case 4:
         Serial.println("Pin 3");
         Serial.println(Pin3);
-        int numpin = 3;
+        numpin = 3;
         calibrar(Pin3, numpin);
         break;
       case 5:
@@ -273,7 +256,7 @@ void loop() {
   Serial.println(medirPH(2));//2=num pin de termometro, debuelve un float
   //medir luz y imprimir
   Serial.print("LUM: ");
-  Serial.println(medirLuz(3));//3=num pin de termometro, debuelve un float
+  //Serial.println(medirLuz(3));//3=num pin de termometro, debuelve un float
   Serial.println("______________________________________________");  delay(1000);
-  Serial.print("\033[2J\033[H");
+  Serial.println("\033[2J\033[H");//borrar monitor serie
 }
