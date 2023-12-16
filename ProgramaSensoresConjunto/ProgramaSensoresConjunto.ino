@@ -338,6 +338,18 @@ void exeMenuCalibracion() {
     Serial.println("4. Calibrar sensor pin 4");
     Serial.println("5. Salir del menú");
 
+    void calibrar(int pin) {
+    Serial.println("Ingrese el valor de temperatura ambiente:");
+    while (!Serial.available()) {
+        // Espera a que el usuario ingrese un valor
+    }
+    int temperaturaAmbiente = Serial.parseInt();
+    Serial.print("Calibrando sensor en el pin ");
+    Serial.print(pin);
+    Serial.print(" con valor de temperatura ambiente ");
+    Serial.println(temperaturaAmbiente);
+    // Aquí puedes realizar la calibración con el valor de temperatura ambiente proporcionado
+}
     // Leer la selección del usuario
     while (!Serial.available()) {
       // Esperar a que el usuario ingrese datos
