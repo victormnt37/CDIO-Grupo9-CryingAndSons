@@ -12,37 +12,45 @@ const divSalinidad = document.getElementById('salinidad').lastElementChild;
 const divPH = document.getElementById('PH').lastElementChild;
 const divLuz = document.getElementById('luz').lastElementChild;
 
-fetch(url)
-  .then(function (response) {
-    return response.json();
-  })
-  .then(function (data) {
-    valorTemperatura = data.with[0].content.field1; // Temperatura
-    valorSalinidad = data.with[0].content.field2; // Salinidad
-    valorHumedad = data.with[0].content.field3; // Humedad
-    valorPH = data.with[0].content.field4; // PH
-    valorLuz = data.with[0].content.field5; // Luz
+actualizarDatos(); // Se actualizan los datos nada más se abre la página
+setInterval(() => {
+  // Y se repite la actualización cada 10 segundos
+  actualizarDatos();
+}, 10000);
 
-    valorHumedad == undefined // Si el dato no está definido pq no se envia por el api se muestra como inactivo
-      ? (divHumedad.innerHTML = 'Inactivo')
-      : (divHumedad.innerHTML = valorHumedad + ' %');
+function actualizarDatos() {
+  fetch(url)
+    .then(function (response) {
+      return response.json();
+    })
+    .then(function (data) {
+      valorTemperatura = data.with[0].content.field1; // Temperatura
+      valorSalinidad = data.with[0].content.field2; // Salinidad
+      valorHumedad = data.with[0].content.field3; // Humedad
+      valorPH = data.with[0].content.field4; // PH
+      valorLuz = data.with[0].content.field5; // Luz
 
-    valorTemperatura == undefined
-      ? (divTemperatura.innerHTML = 'Inactivo')
-      : (divTemperatura.innerHTML = valorTemperatura + ' ºC');
+      valorHumedad == undefined // Si el dato no está definido pq no se envia por el api se muestra como inactivo
+        ? (divHumedad.innerHTML = 'Inactivo')
+        : (divHumedad.innerHTML = valorHumedad + ' %');
 
-    valorSalinidad == undefined
-      ? (divSalinidad.innerHTML = 'Inactivo')
-      : (divSalinidad.innerHTML = valorSalinidad + ' g');
+      valorTemperatura == undefined
+        ? (divTemperatura.innerHTML = 'Inactivo')
+        : (divTemperatura.innerHTML = valorTemperatura + ' ºC');
 
-    valorPH == undefined
-      ? (divPH.innerHTML = 'Inactivo')
-      : (divPH.innerHTML = valorPH + ' pH');
+      valorSalinidad == undefined
+        ? (divSalinidad.innerHTML = 'Inactivo')
+        : (divSalinidad.innerHTML = valorSalinidad + ' g');
 
-    valorLuz == undefined
-      ? (divLuz.innerHTML = 'Inactivo')
-      : (divLuz.innerHTML = valorLuz + ' %');
-  })
-  .catch(function (error) {
-    console.log('Hubo un problema con la solicitud fetch: ', error);
-  });
+      valorPH == undefined
+        ? (divPH.innerHTML = 'Inactivo')
+        : (divPH.innerHTML = valorPH + ' pH');
+
+      valorLuz == undefined
+        ? (divLuz.innerHTML = 'Inactivo')
+        : (divLuz.innerHTML = valorLuz + ' %');
+    })
+    .catch(function (error) {
+      console.log('Hubo un problema con la solicitud fetch: ', error);
+    });
+}
