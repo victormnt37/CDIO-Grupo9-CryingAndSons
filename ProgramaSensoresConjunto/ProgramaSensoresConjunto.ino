@@ -10,6 +10,8 @@ float m = 0.034;
 float B = 0.784;
 
 // Inicialización variables Humedad
+
+int channelValue = 0;
 int sensorValue = 0;
 int HValue1 = 0;
 int HValue2 = 0;
@@ -20,8 +22,10 @@ int MinSensor = 1300;  // valor en seco
 int MaxSensor = 650;   // valor en mojado
 
 // Inicialización variables PH
+#define channelValue 0
 #define Offset 0.00
 #define samplingInterval 20
+#define printInterval 30
 #define ArrayLength 40     // numero de muestras
 int pHArray[ArrayLength];  // almacena las muestras
 int pHArrayIndex = 0;
@@ -32,189 +36,11 @@ int pHArrayIndex = 0;
 String listaDeSensores[] = { "Nada Conectado", "Termometro", "Sensor de Humedad", "Sensor de Luz", "Sensor de PH" };
 String Pin0, Pin1, Pin2, Pin3;
 String listaPines[] = { Pin0, Pin1, Pin2, Pin3 };  //se autoactualiza?
+float ListTemp[] = { 8000, 8000, 8000, 8000 };
+int ListHum[] = { 8000, 8000, 8000, 8000 };
+float ListPH[] = { 8000, 8000, 8000, 8000 };
 
 #define power_pin 5  // Pin para alimentar el sensor de salinidad
-
-#include <ESP8266WiFi.h>
-
-// Comentar/Descomentar para ver mensajes de depuracion en monitor serie y/o respuesta del HTTP server
-#define PRINT_DEBUG_MESSAGES
-#define PRINT_HTTP_RESPONSE
-
-// Comentar/Descomentar para conexion Fuera/Dentro de UPV
-//#define WiFi_CONNECTION_UPV
-
-// Selecciona que servidor REST quieres utilizar entre ThingSpeak y Dweet
-//#define REST_SERVER_THINGSPEAK //Selecciona tu canal para ver los datos en la web (https://thingspeak.com/channels/360979)
-#define REST_SERVER_DWEET  //Selecciona tu canal para ver los datos en la web (http://dweet.io/follow/PruebaGTI)
-
-///////////////////////////////////////////////////////
-/////////////// WiFi Definitions /////////////////////
-//////////////////////////////////////////////////////
-
-#ifdef WiFi_CONNECTION_UPV  //Conexion UPV
-const char WiFiSSID[] = "GTI1";
-const char WiFiPSK[] = "1PV.arduino.Toledo";
-#else  //Conexion fuera de la UPV
-const char WiFiSSID[] = "aaaa";
-const char WiFiPSK[] = "12345678";
-#endif
-
-
-
-///////////////////////////////////////////////////////
-/////////////// SERVER Definitions /////////////////////
-//////////////////////////////////////////////////////
-
-#if defined(WiFi_CONNECTION_UPV)  //Conexion UPV
-const char Server_Host[] = "proxy.upv.es";
-const int Server_HttpPort = 8080;
-#elif defined(REST_SERVER_THINGSPEAK)  //Conexion fuera de la UPV
-const char Server_Host[] = "api.thingspeak.com";
-const int Server_HttpPort = 80;
-#else
-const char Server_Host[] = "dweet.io";
-const int Server_HttpPort = 80;
-#endif
-
-WiFiClient client;
-
-///////////////////////////////////////////////////////
-/////////////// HTTP REST Connection ////////////////
-//////////////////////////////////////////////////////
-
-#ifdef REST_SERVER_THINGSPEAK
-const char Rest_Host[] = "api.thingspeak.com";
-String MyWriteAPIKey = "15CUR2E6XRSC3G24";  // Escribe la clave de tu canal ThingSpeak
-#else
-const char Rest_Host[] = "dweet.io";
-String MyWriteAPIKey = "cdiocurso2018g09";  // Escribe la clave de tu canal Dweet
-#endif
-
-#define NUM_FIELDS_TO_SEND 5  //Numero de medidas a enviar al servidor REST (Entre 1 y 8)
-
-/////////////////////////////////////////////////////
-/////////////// Pin Definitions ////////////////
-//////////////////////////////////////////////////////
-
-const int LED_PIN = 5;  // Thing's onboard, green LED
-
-/////////////////////////////////////////////////////
-/////////////// WiFi Connection ////////////////
-//////////////////////////////////////////////////////
-
-void connectWiFi() {
-  byte ledStatus = LOW;
-
-#ifdef PRINT_DEBUG_MESSAGES
-  Serial.print("MAC: ");
-  Serial.println(WiFi.macAddress());
-#endif
-
-  WiFi.begin(WiFiSSID, WiFiPSK);
-
-  while (WiFi.status() != WL_CONNECTED) {
-    // Blink the LED
-    digitalWrite(LED_PIN, ledStatus);  // Write LED high/low
-    ledStatus = (ledStatus == HIGH) ? LOW : HIGH;
-#ifdef PRINT_DEBUG_MESSAGES
-    Serial.println(".");
-#endif
-    delay(500);
-  }
-#ifdef PRINT_DEBUG_MESSAGES
-  Serial.println("WiFi Connected");
-  Serial.println(WiFi.localIP());  // Print the IP address
-#endif
-}
-
-/////////////////////////////////////////////////////
-/////////////// HTTP POST  ThingSpeak////////////////
-//////////////////////////////////////////////////////
-void HTTPPost(String fieldData[], int numFields) {
-  if (client.connect(Server_Host, Server_HttpPort)) {
-
-    // Construimos el string de datos. Si tienes multiples campos asegurate de no pasarte de 1440 caracteres
-
-    String PostData = "api_key=" + MyWriteAPIKey;
-    for (int field = 1; field < (numFields + 1); field++) {
-      PostData += "&field" + String(field) + "=" + fieldData[field];
-    }
-
-// POST data via HTTP
-#ifdef PRINT_DEBUG_MESSAGES
-    Serial.println("Connecting to ThingSpeak for update...");
-#endif
-    client.println("POST http://" + String(Rest_Host) + "/update HTTP/1.1");
-    client.println("Host: " + String(Rest_Host));
-    client.println("Connection: close");
-    client.println("Content-Type: application/x-www-form-urlencoded");
-    client.println("Content-Length: " + String(PostData.length()));
-    client.println();
-    client.println(PostData);
-#ifdef PRINT_DEBUG_MESSAGES
-    Serial.println(PostData);
-    Serial.println();
-//Para ver la respuesta del servidor
-#ifdef PRINT_HTTP_RESPONSE
-    delay(500);
-    Serial.println();
-    while (client.available()) {
-      String line = client.readStringUntil('\r');
-      Serial.print(line);
-    }
-    Serial.println();
-    Serial.println();
-#endif
-#endif
-  }
-}
-
-////////////////////////////////////////////////////
-/////////////// HTTP GET  ////////////////
-//////////////////////////////////////////////////////
-void HTTPGet(String fieldData[], int numFields) {
-  if (client.connect(Server_Host, Server_HttpPort)) {
-#ifdef REST_SERVER_THINGSPEAK
-    String PostData = "GET https://api.thingspeak.com/update?api_key=";
-    PostData = PostData + MyWriteAPIKey;
-#else
-    String PostData = "GET http://dweet.io/dweet/for/";
-    PostData = PostData + MyWriteAPIKey + "?";
-#endif
-
-    for (int field = 1; field < (numFields + 1); field++) {
-      PostData += "&field" + String(field) + "=" + fieldData[field];
-    }
-
-
-#ifdef PRINT_DEBUG_MESSAGES
-    Serial.println("Connecting to Server for update...");
-#endif
-    client.print(PostData);
-    client.println(" HTTP/1.1");
-    client.println("Host: " + String(Rest_Host));
-    client.println("Connection: close");
-    client.println();
-#ifdef PRINT_DEBUG_MESSAGES
-    Serial.println(PostData);
-    Serial.println();
-//Para ver la respuesta del servidor
-#ifdef PRINT_HTTP_RESPONSE
-    delay(500);
-    Serial.println();
-    while (client.available()) {
-      String line = client.readStringUntil('\r');
-      Serial.print(line);
-    }
-    Serial.println();
-    Serial.println();
-#endif
-#endif
-  }
-}
-
-
 
 // ****************************** Definición de funciones ******************************
 
@@ -241,6 +67,8 @@ int medirHumedad(int Pin) {
   HValue4 = map(sensorValue, MinSensor, MaxSensor, 0, 100);
   HValue5 = map(sensorValue, MinSensor, MaxSensor, 0, 100);
   int Media = (HValue1 + HValue2 + HValue3 + HValue4 + HValue5) / 5;
+  Serial.print("Hum: ");
+  Serial.println(Media);
   return Media;
 }
 
@@ -248,6 +76,8 @@ float tomarTemperatura(int Pin) {
   float rawValue = ads.readADC_SingleEnded(Pin);
   float Volt = (rawValue / 32767) * 4.096;
   float T = ((Volt - B) / m) - 0.77;
+  Serial.print("Temperatura: ");
+  Serial.println(T);
   return T;
 }
 
@@ -265,6 +95,7 @@ float medirSalinidad() {
   float salinidadReal = 288 + 33.067 * salinidad - 2.92 * pow(salinidad, 2) + 0.0853 * pow(salinidad, 3);
   return salinidadReal;
 }
+
 float averageSample(int numSamples, int* samples) {
   float sum = 0.0;
   for (int i = 0; i < numSamples; i++) {
@@ -290,6 +121,15 @@ float medirPH(int pin) {
     pHValue = 3.5 * voltage + Offset;
     samplingTime = millis();
   }
+
+  if (millis() - printTime > printInterval) {
+    // Cada printTime segundos se escribe un dato en pantalla
+    // Serial.print("Voltage: ");
+    // Serial.print(voltage, 2);
+    Serial.print("    pH value: ");
+    Serial.println(pHValue, 2);
+    printTime = millis();
+  }
   return pHValue;
 }
 int buscarPosicion(String sensor) {
@@ -298,7 +138,7 @@ int buscarPosicion(String sensor) {
   int posicion = -1;
   // Buscar el string en la lista
   for (int i = 0; i < sizeof(listaDeSensores) / sizeof(listaDeSensores[0]); ++i) {
-    if (listaDeSensores[i] == sensor) {
+    if (lista[i] == sensor) {
       encontrado = true;
       posicion = i;
       break;  // Salir del bucle cuando se encuentra el string
@@ -307,22 +147,28 @@ int buscarPosicion(String sensor) {
   //if si no encuentra (encontrado = false)
   return posicion;
 }
-void calibrar(String sensor, int pin) {
+void calibrar(string sensor, int pin) {
 
   int listnum = buscarPosicion(sensor);  //termometro
-  if (listnum == 0) {
+  if (valor == 0) {
     // Nada Conectado
     Serial.println("Nada conectado");
-  } else if (listnum == 1) {
+    break;
+  } else if (valor == 1) {
     // Calibrar Termometro
-  } else if (listnum == 2) {
+    break;
+  } else if (valor == 2) {
     // Calibrar Sensor de Humedad
-  } else if (listnum == 3) {
+    break;
+  } else if (valor == 3) {
     // Calibrar Sensor de Luz
-  } else if (listnum == 4) {
+    break;
+  } else if (valor == 4) {
     // Calibrar Sensor de PH
+    break;
   } else {
     Serial.println("Sensor no reconocido/no listado");
+    break;
   }
 }
 void exeMenuCalibracion() {
@@ -338,50 +184,37 @@ void exeMenuCalibracion() {
     Serial.println("4. Calibrar sensor pin 4");
     Serial.println("5. Salir del menú");
 
-    void calibrar(int pin) {
-    Serial.println("Ingrese el valor de temperatura ambiente:");
-    while (!Serial.available()) {
-        // Espera a que el usuario ingrese un valor
-    }
-    int temperaturaAmbiente = Serial.parseInt();
-    Serial.print("Calibrando sensor en el pin ");
-    Serial.print(pin);
-    Serial.print(" con valor de temperatura ambiente ");
-    Serial.println(temperaturaAmbiente);
-    // Aquí puedes realizar la calibración con el valor de temperatura ambiente proporcionado
-}
     // Leer la selección del usuario
     while (!Serial.available()) {
       // Esperar a que el usuario ingrese datos
     }
     seleccion = Serial.parseInt();
 
-    int numpin = -1;
     // Realizar la acción según la selección
     switch (seleccion) {
       case 1:
         Serial.println("Pin 0:");
         Serial.println(Pin0);
-        numpin = 0;
+        int numpin = 0;
         calibrar(Pin0, numpin);
         break;
 
       case 2:
         Serial.println("Pin 1");
         Serial.println(Pin1);
-        numpin = 1;
+        int numpin = 1;
         calibrar(Pin1, numpin);
         break;
       case 3:
         Serial.println("Pin 2");
         Serial.println(Pin2);
-        numpin = 2;
+        int numpin = 2;
         calibrar(Pin2, numpin);
         break;
       case 4:
         Serial.println("Pin 3");
         Serial.println(Pin3);
-        numpin = 3;
+        int numpin = 3;
         calibrar(Pin3, numpin);
         break;
       case 5:
@@ -393,15 +226,10 @@ void exeMenuCalibracion() {
     }
   }
 }
-// ****************************** SETUP ******************************
+// ****************************** Setup ******************************
 
 void setup() {
-
-  // Serial.begin(115200);
-
-#ifdef PRINT_DEBUG_MESSAGES
-  Serial.begin(9600);
-#endif
+  Serial.begin(115200);
   Serial.println("Programa de lectura de NTC con ESP8266 y ADS1115");
 
   if (!ads.begin()) {  // Inicializar el ADC para la humedad
@@ -432,66 +260,105 @@ void setup() {
     exeMenuCalibracion();
   } else {
     Serial.println("Iniciando.");
-    connectWiFi();
-    digitalWrite(LED_PIN, HIGH);
-
-#ifdef PRINT_DEBUG_MESSAGES
-    Serial.print("Server_Host: ");
-    Serial.println(Server_Host);
-    Serial.print("Port: ");
-    Serial.println(String(Server_HttpPort));
-    Serial.print("Server_Rest: ");
-    Serial.println(Rest_Host);
-#endif
   }
 }
+
+// bool calibrar = false;
+// while (calibrar) {
+//   Serial.println("¿Deseas calibrar algun sensor de la sonda? (S/N)");
+//   String input = Serial.readStringUntil('\n');
+//   if (input == "S" || input == "s") {
+//     //Calibracion de sensores
+//     Serial.println("¿Qué sensor deseas calibrar? (Temperatura/Humedad/Luz)");
+//     String sensorInput = Serial.readStringUntil('\n');
+
+//     if (sensorInput.equalsIgnoreCase("Temperatura")) {
+//       // Calibración de temperatura
+//       Serial.println("Calibración de temperatura...");
+//       // Aquí puedes agregar la lógica específica de calibración para la temperatura
+//     } else if (sensorInput.equalsIgnoreCase("Humedad")) {
+//       // Calibración de humedad
+//       Serial.println("Calibración de humedad...");
+//       // Aquí puedes agregar la lógica específica de calibración para la humedad
+
+//       //CALIBRACION DE HUMEDAD SIMPLE
+//       // if (input == "Si" || input == "si") {
+//       //   Serial.println("Ponga el sensor en SECO y pulse enter para registrar el nuevo valor...");
+//       //   while (Serial.read() != '\n') {}
+//       //   sensorValue = ads.readADC_SingleEnded(0);
+//       //   MinSensor = sensorValue + 10;
+//       //   Serial.println("Ponga el sensor en MOJADO y pulse enter para registrar el nuevo valor...");
+//       //   while (Serial.read() != '\n') {}
+//       //   sensorValue = ads.readADC_SingleEnded(0);
+//       //   MaxSensor = sensorValue - 10;
+//     } else if (sensorInput.equalsIgnoreCase("Luz")) {
+//       // Calibración de luz
+//       Serial.println("Calibración de luz...");
+//       // Aquí puedes agregar la lógica específica de calibración para la luz
+//     } else {
+//       Serial.println("Sensor no válido para calibración.");
+//     }
+//   } else if (input == "N" || input == "n") {
+//     calibrar = false;
+//   } else {
+//     Serial.println("Opcion no valida");
+//   }
+// }
+
 
 // ****************************** Loop ******************************
 
 void loop() {
-  Serial.println("______________________________________________");
-  //delay(1000);
-  // Serial.println("\033[2J\033[H");  //borrar monitor serie
-
-  String data[NUM_FIELDS_TO_SEND + 1];  // Podemos enviar hasta 8 datos
-
-  data[1] = String(tomarTemperatura(1));  //1=num pin de termometro, debuelve un float //Escribimos el dato 1. Recuerda actualizar numFields
-#ifdef PRINT_DEBUG_MESSAGES
-  Serial.print("Temperatura: ");
-  Serial.println(data[1]);
-#endif
-
-  data[2] = String(medirSalinidad());  //Escribimos el dato 2. Recuerda actualizar numFields
-#ifdef PRINT_DEBUG_MESSAGES
+  for (int i = 0; i <= 3; ++i) {
+    // Construir el nombre del pin
+    String pinActual = listaPines[i];  //sonda del pin
+    // Realizar acciones según el valor de la variable Pin
+    if (pinActual == listaDeSensores[1]) {         //temperatura //TO-DO: Se estan comparando dos strings q no tienen sentido comparar "pin0 con Termometro"
+      ListTemp[i] = tomarTemperatura(i);           //falta eliminar valores 8000
+    } else if (pinActual == listaDeSensores[2]) {  //Humedad
+      ListHum[i] = medirHumedad(i);                //falta eliminar valores 8000
+    } else if (pinActual == listaDeSensores[3]) {  //luz
+      //ListSal[i]=luz();//falta eliminar valores 8000
+    } else if (pinActual == listaDeSensores[4]) {  //PH
+      //Lista de ph
+      ListPH[i] = medirPH(i);
+    } else {
+      //pin sin nada o sonda no contemplada
+    }
+  }
+  float salinidad = medirSalinidad();
+  //Imprimir Temperatura
+  for (int i = 0; i < sizeof(ListTemp) / sizeof(ListTemp[0]); ++i) {
+    // Verificar si el valor es diferente de 8000 antes de imprimir
+    if (ListTemp[i] != 8000) {
+      Serial.print("Temperatura: ");
+      Serial.print(ListTemp[i]);
+      Serial.println("Cº");
+      //mandar add al string a enviar
+    }
+  }
+  for (int i = 0; i < sizeof(ListHum) / sizeof(ListHum[0]); ++i) {
+    // Verificar si el valor es diferente de 8000 antes de imprimir
+    if (ListHum[i] != 8000) {
+      Serial.print("Humedad: ");
+      Serial.print(ListHum[i]);
+      Serial.println("%");
+      //mandar add al string a enviar
+    }
+  }
   Serial.print("Salinidad: ");
-  Serial.println(data[2]);
-#endif
+  Serial.println(salinidad);
+  for (int i = 0; i < sizeof(ListPH) / sizeof(ListPH[0]); ++i) {
+    // Verificar si el valor es diferente de 8000 antes de imprimir
+    if (ListHum[i] != 8000) {
+      Serial.print("PH: ");
+      Serial.print(ListPH[i]);
+      Serial.println("ph");
+      //mandar add al string a enviar
+    }
+  }
+  Serial.println("______________________________________________");
 
-  data[3] = String(medirHumedad(0));  //0=num pin de termometro, debuelve un int //Escribimos el dato 3. Recuerda actualizar numFields
-#ifdef PRINT_DEBUG_MESSAGES
-  Serial.print("Humedad: ");
-  Serial.println(data[3]);
-#endif
 
-  data[4] = String(medirPH(2));  //2=num pin de termometro, debuelve un float //Escribimos el dato 2. Recuerda actualizar numFields
-#ifdef PRINT_DEBUG_MESSAGES
-  Serial.print("PH: ");
-  Serial.println(data[4]);
-#endif
-
-  //data[ 5 ] = String( medirLuz(3) ); //3=num pin de termometro, debuelve un float //Escribimos el dato 2. Recuerda actualizar numFields
-  data[5] = String(0);  //quitar cuando haya sensor de luz
-#ifdef PRINT_DEBUG_MESSAGES
-  Serial.print("Luz: ");
-  Serial.println(data[5]);
-#endif
-
-  //Selecciona si quieres enviar con GET(ThingSpeak o Dweet) o con POST(ThingSpeak)
-  //HTTPPost( data, NUM_FIELDS_TO_SEND );
-  HTTPGet(data, NUM_FIELDS_TO_SEND);
-
-  //Selecciona si quieres un retardo de 15seg para hacer pruebas o dormir el SparkFun
-  delay(15000);
-  //Serial.print( "Goodnight" );
-  //ESP.deepSleep( sleepTimeSeconds * 1000000 );
+  delay(1000);
 }
