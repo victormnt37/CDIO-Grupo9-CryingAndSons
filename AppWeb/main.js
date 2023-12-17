@@ -1,4 +1,4 @@
-const url = 'https://dweet.io:443/get/dweets/for/cdiocurso2023g09';
+const url = 'https://dweet.io:443/get/dweets/for/cdiocurso2018g09';
 
 let valorHumedad = 'Inactivo';
 let valorTemperatura = 'Inactivo';
@@ -6,31 +6,42 @@ let valorSalinidad = 'Inactivo';
 let valorPH = 'Inactivo';
 let valorLuz = 'Inactivo';
 
-//dweet.io/dweet/for/cdiocurso2023g09
-//dweet.io:443/get/dweets/for/
-
-// getData();
-
-// setInterval(getData(), 3000);
-
-// async function getData() {
-//   const resp = await fetch(url);
-//   console.log(resp);
-//   console.log(resp.body); // locked?
-// }
+const divHumedad = document.getElementById('humedad').lastElementChild;
+const divTemperatura = document.getElementById('temperatura').lastElementChild;
+const divSalinidad = document.getElementById('salinidad').lastElementChild;
+const divPH = document.getElementById('PH').lastElementChild;
+const divLuz = document.getElementById('luz').lastElementChild;
 
 fetch(url)
   .then(function (response) {
     return response.json();
   })
   .then(function (data) {
-    console.log(data.with[0].content); // el 0 ha de cambiar al último posible? o siempre es el 0, una de dos
-    console.log(data.with[0].content);
-    valorHumedad = data.with[0].content.field1; // Temperatura
+    valorTemperatura = data.with[0].content.field1; // Temperatura
     valorSalinidad = data.with[0].content.field2; // Salinidad
     valorHumedad = data.with[0].content.field3; // Humedad
-    valorHumedad = data.with[0].content.field4; // PH
+    valorPH = data.with[0].content.field4; // PH
     valorLuz = data.with[0].content.field5; // Luz
+
+    valorHumedad == undefined // Si el dato no está definido pq no se envia por el api se muestra como inactivo
+      ? (divHumedad.innerHTML = 'Inactivo')
+      : (divHumedad.innerHTML = valorHumedad);
+
+    valorTemperatura == undefined
+      ? (divTemperatura.innerHTML = 'Inactivo')
+      : (divTemperatura.innerHTML = valorTemperatura);
+
+    valorSalinidad == undefined
+      ? (divSalinidad.innerHTML = 'Inactivo')
+      : (divSalinidad.innerHTML = valorSalinidad);
+
+    valorPH == undefined
+      ? (divPH.innerHTML = 'Inactivo')
+      : (divPH.innerHTML = valorPH);
+
+    valorLuz == undefined
+      ? (divLuz.innerHTML = 'Inactivo')
+      : (divLuz.innerHTML = valorLuz);
   })
   .catch(function (error) {
     console.log('Hubo un problema con la solicitud fetch: ', error);
