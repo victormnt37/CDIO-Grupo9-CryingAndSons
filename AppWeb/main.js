@@ -25,23 +25,23 @@ fetch(url)
 
     valorHumedad == undefined // Si el dato no está definido pq no se envia por el api se muestra como inactivo
       ? (divHumedad.innerHTML = 'Inactivo')
-      : (divHumedad.innerHTML = valorHumedad);
+      : (divHumedad.innerHTML = valorHumedad + ' %');
 
     valorTemperatura == undefined
       ? (divTemperatura.innerHTML = 'Inactivo')
-      : (divTemperatura.innerHTML = valorTemperatura);
+      : (divTemperatura.innerHTML = valorTemperatura + ' ºC');
 
     valorSalinidad == undefined
       ? (divSalinidad.innerHTML = 'Inactivo')
-      : (divSalinidad.innerHTML = valorSalinidad);
+      : (divSalinidad.innerHTML = valorSalinidad + ' g');
 
     valorPH == undefined
       ? (divPH.innerHTML = 'Inactivo')
-      : (divPH.innerHTML = valorPH);
+      : (divPH.innerHTML = valorPH + ' pH');
 
     valorLuz == undefined
       ? (divLuz.innerHTML = 'Inactivo')
-      : (divLuz.innerHTML = valorLuz);
+      : (divLuz.innerHTML = valorLuz + ' %');
   })
   .catch(function (error) {
     console.log('Hubo un problema con la solicitud fetch: ', error);
