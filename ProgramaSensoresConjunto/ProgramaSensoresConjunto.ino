@@ -292,6 +292,15 @@ float medirPH(int pin) {
   }
   return pHValue;
 }
+String medirLuz(int pin) {
+  int16_t adc10 = ads.readADC_SingleEnded(pin);
+  float voltage5 = (adc10 * 4.096) / 32767;
+  // Serial.print("Nivel de luminosidad: ");
+  // Serial.println(adc10,DEC);
+  int porcentaje = map(voltage5, 100, 800, 0, 100);
+  String res = porcentaje + "%";
+  return res;
+}
 int buscarPosicion(String sensor) {
   bool encontrado = false;
   // Variable para almacenar la posición del string (si se encuentra)
@@ -315,6 +324,18 @@ void calibrar(String sensor, int pin) {
     Serial.println("Nada conectado");
   } else if (listnum == 1) {
     // Calibrar Termometro
+    //     void calibrar(int pin) {
+    //     Serial.println("Ingrese el valor de temperatura ambiente:");
+    //     while (!Serial.available()) {
+    //         // Espera a que el usuario ingrese un valor
+    //     }
+    //     int temperaturaAmbiente = Serial.parseInt();
+    //     Serial.print("Calibrando sensor en el pin ");
+    //     Serial.print(pin);
+    //     Serial.print(" con valor de temperatura ambiente ");
+    //     Serial.println(temperaturaAmbiente);
+    //     // Aquí puedes realizar la calibración con el valor de temperatura ambiente proporcionado
+    // }
   } else if (listnum == 2) {
     // Calibrar Sensor de Humedad
   } else if (listnum == 3) {
@@ -338,18 +359,6 @@ void exeMenuCalibracion() {
     Serial.println("4. Calibrar sensor pin 4");
     Serial.println("5. Salir del menú");
 
-    void calibrar(int pin) {
-    Serial.println("Ingrese el valor de temperatura ambiente:");
-    while (!Serial.available()) {
-        // Espera a que el usuario ingrese un valor
-    }
-    int temperaturaAmbiente = Serial.parseInt();
-    Serial.print("Calibrando sensor en el pin ");
-    Serial.print(pin);
-    Serial.print(" con valor de temperatura ambiente ");
-    Serial.println(temperaturaAmbiente);
-    // Aquí puedes realizar la calibración con el valor de temperatura ambiente proporcionado
-}
     // Leer la selección del usuario
     while (!Serial.available()) {
       // Esperar a que el usuario ingrese datos
@@ -393,6 +402,7 @@ void exeMenuCalibracion() {
     }
   }
 }
+
 // ****************************** SETUP ******************************
 
 void setup() {
@@ -479,8 +489,8 @@ void loop() {
   Serial.println(data[4]);
 #endif
 
-  //data[ 5 ] = String( medirLuz(3) ); //3=num pin de termometro, debuelve un float //Escribimos el dato 2. Recuerda actualizar numFields
-  data[5] = String(0);  //quitar cuando haya sensor de luz
+  data[5] = String(medirLuz(3));  //3=num pin de termometro, debuelve un float //Escribimos el dato 2. Recuerda actualizar numFields
+  //data[5] = String(0);  //quitar cuando haya sensor de luz
 #ifdef PRINT_DEBUG_MESSAGES
   Serial.print("Luz: ");
   Serial.println(data[5]);
