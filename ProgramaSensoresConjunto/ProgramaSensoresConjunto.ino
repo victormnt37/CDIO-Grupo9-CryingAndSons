@@ -449,28 +449,11 @@ void setup() {
 // ****************************** Loop ******************************
 
 void loop() {
-  // //medir Temperatura y imprimir
-  // Serial.print(": ");
-  // Serial.println();
-  // //medir Salinidad y imprimir
-  // float salinidad = ;
-  // Serial.print("Salinidad: ");
-  // Serial.println(salinidad);
-  // //medir humedad y imprimir
-  // Serial.print("Humedad: ");
-  // Serial.println();
-  // //medir ph y imprimir
-  // Serial.print("PH: ");
-  // Serial.println();
-  // //medir luz y imprimir
-  // Serial.print("LUM: ");
-  // //Serial.println();
   Serial.println("______________________________________________");
   //delay(1000);
   // Serial.println("\033[2J\033[H");  //borrar monitor serie
 
   String data[NUM_FIELDS_TO_SEND + 1];  // Podemos enviar hasta 8 datos
-
 
   data[1] = String(tomarTemperatura(1));  //1=num pin de termometro, debuelve un float //Escribimos el dato 1. Recuerda actualizar numFields
 #ifdef PRINT_DEBUG_MESSAGES
@@ -484,13 +467,11 @@ void loop() {
   Serial.println(data[2]);
 #endif
 
-
   data[3] = String(medirHumedad(0));  //0=num pin de termometro, debuelve un int //Escribimos el dato 3. Recuerda actualizar numFields
 #ifdef PRINT_DEBUG_MESSAGES
   Serial.print("Humedad: ");
   Serial.println(data[3]);
 #endif
-
 
   data[4] = String(medirPH(2));  //2=num pin de termometro, debuelve un float //Escribimos el dato 2. Recuerda actualizar numFields
 #ifdef PRINT_DEBUG_MESSAGES
