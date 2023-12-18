@@ -8,6 +8,7 @@ Adafruit_ADS1015 ads;  // Instancia de Adafruit_ADS1015
 float refResistance = 2160.0;  // Resistencia de referencia de la NTC
 float m = 0.034;
 float B = 0.784;
+float calibT= 0;
 
 // Inicialización variables Humedad
 int sensorValue = 0;
@@ -244,10 +245,10 @@ int medirHumedad(int Pin) {
   return Media;
 }
 
-float tomarTemperatura(int Pin) {
+float medirTemp(int Pin) {
   float rawValue = ads.readADC_SingleEnded(Pin);
   float Volt = (rawValue / 32767) * 4.096;
-  float T = ((Volt - B) / m) - 0.77;
+  float T = ((Volt - B) / m) + calibT;
   return T;
 }
 
@@ -295,9 +296,11 @@ float medirPH(int pin) {
 String medirLuz(int pin) {
   int16_t adc10 = ads.readADC_SingleEnded(pin);
   float voltage5 = (adc10 * 4.096) / 32767;
-  // Serial.print("Nivel de luminosidad: ");
   // Serial.println(adc10,DEC);
-  int porcentaje = map(voltage5, 100, 800, 0, 100);
+  int porcentaje = map(voltage5, 100, 30800, 0, 100);
+
+  Serial.println(adc10);
+  Serial.println(porcentaje);
   String res = porcentaje + "%";
   return res;
 }
@@ -324,18 +327,33 @@ void calibrar(String sensor, int pin) {
     Serial.println("Nada conectado");
   } else if (listnum == 1) {
     // Calibrar Termometro
-    //     void calibrar(int pin) {
-    //     Serial.println("Ingrese el valor de temperatura ambiente:");
-    //     while (!Serial.available()) {
-    //         // Espera a que el usuario ingrese un valor
-    //     }
-    //     int temperaturaAmbiente = Serial.parseInt();
-    //     Serial.print("Calibrando sensor en el pin ");
-    //     Serial.print(pin);
-    //     Serial.print(" con valor de temperatura ambiente ");
-    //     Serial.println(temperaturaAmbiente);
-    //     // Aquí puedes realizar la calibración con el valor de temperatura ambiente proporcionado
-    // }
+    int tempA;
+
+    while (true) {
+      Serial.println("Ingrese el valor de temperatura ambiente:");
+
+      while (!Serial.available()) {
+        // Espera a que el usuario ingrese un valor
+      }
+      String inputString = Serial.readStringUntil('\n');  // Leer la entrada del usuario hasta que presiona Enter
+      inputString.trim();                                 // Eliminar espacios en blanco al principio y al final
+      // Validar la entrada para asegurarse de que sea un número
+      if (inputString.length() > 0 && inputString.toInt() != 0) {
+        tempA = inputString.toInt();
+        break;  // Salir del bucle si la entrada es válida
+      } else {
+        Serial.println("Entrada no válida. Por favor, ingrese un número.");
+      }
+    }
+    Serial.print("Calibrando sensor en el pin ");
+    Serial.print(pin);
+    Serial.print(" con valor de temperatura ambiente ");
+    Serial.println(tempA);
+    int T = medirTemp(pin);
+    //calibrar a partir de tempA   float T = ((Volt - B) / m) - calibT;
+    calibT= T - (T - tempA);
+
+
   } else if (listnum == 2) {
     // Calibrar Sensor de Humedad
   } else if (listnum == 3) {
@@ -465,7 +483,7 @@ void loop() {
 
   String data[NUM_FIELDS_TO_SEND + 1];  // Podemos enviar hasta 8 datos
 
-  data[1] = String(tomarTemperatura(1));  //1=num pin de termometro, debuelve un float //Escribimos el dato 1. Recuerda actualizar numFields
+  data[1] = String(medirTemp(1));  //1=num pin de termometro, debuelve un float //Escribimos el dato 1. Recuerda actualizar numFields
 #ifdef PRINT_DEBUG_MESSAGES
   Serial.print("Temperatura: ");
   Serial.println(data[1]);
@@ -490,7 +508,6 @@ void loop() {
 #endif
 
   data[5] = String(medirLuz(3));  //3=num pin de termometro, debuelve un float //Escribimos el dato 2. Recuerda actualizar numFields
-  //data[5] = String(0);  //quitar cuando haya sensor de luz
 #ifdef PRINT_DEBUG_MESSAGES
   Serial.print("Luz: ");
   Serial.println(data[5]);
@@ -501,7 +518,8 @@ void loop() {
   HTTPGet(data, NUM_FIELDS_TO_SEND);
 
   //Selecciona si quieres un retardo de 15seg para hacer pruebas o dormir el SparkFun
-  delay(15000);
+  delay(5000);
+  Serial.flush();
   //Serial.print( "Goodnight" );
   //ESP.deepSleep( sleepTimeSeconds * 1000000 );
 }
