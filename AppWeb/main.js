@@ -48,7 +48,7 @@ function actualizarDatos() {
 
       valorLuz == undefined
         ? (divLuz.innerHTML = 'Inactivo')
-        : (divLuz.innerHTML = valorLuz + ' %');
+        : (divLuz.innerHTML = valorLuz);
     })
     .catch(function (error) {
       console.log('Hubo un problema con la solicitud fetch: ', error);
