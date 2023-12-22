@@ -1,0 +1,6 @@
+Estas carpetas contienen el código con el que hemos estado trabajando hasta ahora pero derivado a clases.
+Para compilar el programa se debe ejecutar el archivo codigo_clases.ino
+
+El resto de carpetas se deben copiar y pasar a Documentos/Arduino/libraries/
+
+No las borreis, solo copiadlas.
