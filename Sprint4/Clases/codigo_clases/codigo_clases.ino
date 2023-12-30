@@ -8,10 +8,10 @@ Adafruit_ADS1115 ads1115;
 float refResistance = 2160.0;  // Resistencia de referencia de la NTC
 
 //Valores de salinidad
-#define power_pin 5 
+#define power_pin 5
 
 //variables para pH
-float Offset  = 0.35;
+float Offset = 0.35;
 
 //variables para luminosidad
 #include <ESP8266WiFi.h>
@@ -193,14 +193,33 @@ void HTTPGet(String fieldData[], int numFields) {
   }
 }
 
+int tempA;
+int T = 0;
+float calibT = 2.65;
+
+// Declaración de los objetos tipo sensor *primer valor es el canal del ADS al que estan conectados
+SensorTemperatura sensorTemp(1, ads1115, calibT);
+SensorPh sensorPh(2, Offset, ads1115);
+SensorHumedad sensorHum(0, ads1115);
+SensorLuz sensorLuz(3, ads1115);
+
+
+//--------------------NUEVA ESCALA DE LUZ--------------------------------
+//                        OSCURO == 0
+//                     LUZ NATURAL == 1
+//                   LUZ ARTIFICIAL == 10
+
+//creo que hay un error en vuetro algoritmo, chequear la clase y corregir si hace falta
+// float voltage5 = (adc10*4.096)/32767; // linea innecesaria nunca llegais a usar los resultados de voltage5 solo de adc10
+
 
 
 void setup() {
-  #ifdef PRINT_DEBUG_MESSAGES
+#ifdef PRINT_DEBUG_MESSAGES
   Serial.begin(9600);
 #endif
   Serial.println("Programa de lectura de NTC con ESP8266 y ADS1115");
-  
+
   ads1115.begin(0x48);
   ads1115.setGain(GAIN_ONE);
 
@@ -211,58 +230,120 @@ void setup() {
   }
   pinMode(power_pin, OUTPUT);  // Inicialixar el pin mode para salinidad
 
+  Serial.println("¿Desea ejecutar el menú? (y/n)");
+
+  while (!Serial.available()) {
+    // Esperar a que el usuario ingrese datos
+  }
+
+  sensorTemp.setCalibration(calibT);
+
+  char respuesta = Serial.read();
+
+  if (respuesta == 'y' || respuesta == 'Y') {
+    // Ejecutar el menú si la respuesta es 'y' o 'Y'
+    int seleccion;
+    bool salir = false;
+
+    while (true) {
+
+      if (salir) {
+        break;
+      }
+      // Mostrar las opciones del menú
+      Serial.println("Seleccione una opción:");
+      Serial.println("1. Calibrar sensor Humedad");
+      Serial.println("2. Calibrar sensor Temperatura");
+      Serial.println("3. Calibrar sensor PH");
+      Serial.println("4. Calibrar sensor Luz");
+      Serial.println("5. Salir del menú");
+
+      // Leer la selección del usuario
+      while (!Serial.available()) {
+        // Esperar a que el usuario ingrese datos
+      }
+      seleccion = Serial.parseInt();
+
+      int numpin = -1;
+      // Realizar la acción según la selección
+      switch (seleccion) {
+        case 1:
+          Serial.println("Pin 0: Humedad");
+          //calibrar Humedad
+          break;
+
+        case 2:
+          Serial.println("Pin 1: Temperatura");
+
+          while (true) {
+            Serial.println("Ingrese el valor de temperatura ambiente:");
+
+            while (!Serial.available()) {
+              // Espera a que el usuario ingrese un valor
+            }
+            String inputString = Serial.readStringUntil('\n');  // Leer la entrada del usuario hasta que presiona Enter
+            inputString.trim();                                 // Eliminar espacios en blanco al principio y al final
+            // Validar la entrada para asegurarse de que sea un número
+            if (inputString.length() > 0 && inputString.toInt() != 0) {
+              tempA = inputString.toInt();
+              break;  // Salir del bucle si la entrada es válida
+            } else {
+              Serial.println("Entrada no válida. Por favor, ingrese un número.");
+            }
+          }
+          T = sensorTemp.lecturaTemperatura();
+          calibT = tempA - T;
+          //mandar calibT a la clase temperatura
+          sensorTemp.setCalibration(calibT);
+
+          break;
+        case 3:
+          Serial.println("Pin 2: PH");
+          //calibrar PH
+          break;
+        case 4:
+          Serial.println("Pin 3: Luz");
+          //calibrar Luz
+          break;
+        case 5:
+          Serial.println("Salir");
+          salir = true;
+          break;  // Salir del bucle y, por lo tanto, del menú
+        default:
+          Serial.println("Opción no válida. Inténtelo de nuevo.");
+          break;
+      }
+    }
+  }
   //Menu de inicializado
   delay(1000);
   Serial.println("Iniciando.");
-    connectWiFi();
-    digitalWrite(LED_PIN, HIGH);
+  connectWiFi();
+  digitalWrite(LED_PIN, HIGH);
 
 #ifdef PRINT_DEBUG_MESSAGES
-    Serial.print("Server_Host: ");
-    Serial.println(Server_Host);
-    Serial.print("Port: ");
-    Serial.println(String(Server_HttpPort));
-    Serial.print("Server_Rest: ");
-    Serial.println(Rest_Host);
+  Serial.print("Server_Host: ");
+  Serial.println(Server_Host);
+  Serial.print("Port: ");
+  Serial.println(String(Server_HttpPort));
+  Serial.print("Server_Rest: ");
+  Serial.println(Rest_Host);
 #endif
 }
-
-float medirSalinidad(){
+float medirSalinidad() {
   int16_t adc0;
   float salinidad;
-  
+
   // Alimentamos la sonda con un tren de pulsos
   digitalWrite(power_pin, HIGH);
   delay(100);
-
-  // leemos cuando hay un nivel alto
   adc0 = analogRead(A0);
   digitalWrite(power_pin, LOW);
   delay(100);
-
-  // Realizamos el cálculo de la salinidad
-  salinidad = map(adc0, 0, 1023, 0, 500); // Ajustar rango de mapeo
-
-  // // Presentamos lectura
-  // Serial.print("Salinidad de lectura = ");
-  // Serial.println(salinidad, 2);
+  salinidad = map(adc0, 0, 1023, 0, 500);
   return salinidad;
 }
 
-// Declaración de los objetos tipo sensor *primer valor es el canal del ADS al que estan conectados
-SensorTemperatura sensorTemp( 1, ads1115); 
-SensorPh sensorPh( 2,Offset, ads1115);
-SensorHumedad sensorHum( 0, ads1115); 
-SensorLuz sensorLuz( 3, ads1115);
-
-
-//--------------------NUEVA ESCALA DE LUZ--------------------------------
-//                        OSCURO == 0
-//                     LUZ NATURAL == 1
-//                   LUZ ARTIFICIAL == 10
-
-//creo que hay un error en vuetro algoritmo, chequear la clase y corregir si hace falta
-// float voltage5 = (adc10*4.096)/32767; // linea innecesaria nunca llegais a usar los resultados de voltage5 solo de adc10
 
 
 void loop() {

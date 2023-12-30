@@ -1,6 +1,6 @@
 #include "SensorTemperatura.h"
 
-SensorTemperatura::SensorTemperatura(int canal, Adafruit_ADS1115& ads) : canalADS(canal),ads1(ads){
+SensorTemperatura::SensorTemperatura(int canal, Adafruit_ADS1115& ads, float calibT) : canalADS(canal),ads1(ads),calibT(calibT){
 }
 
 float SensorTemperatura::lecturaTemperatura() {
@@ -11,6 +11,9 @@ float SensorTemperatura::lecturaTemperatura() {
   float m=0.034;
   float B=0.784;
   float T= (Volt-B)/m;
-  float Tf= T-2.65; 
+  float Tf= T+calibT; 
   return Tf;
+}
+void SensorTemperatura::setCalibration(float calibration) {
+  calibT = calibration;
 }
