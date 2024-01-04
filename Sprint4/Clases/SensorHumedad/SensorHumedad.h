@@ -7,10 +7,14 @@ class SensorHumedad {
   private:
     int canalADS;
     Adafruit_ADS1115& ads1;
+    static int valorSeco;
+    static int valorMojado;
 
   public:
     SensorHumedad(int canal,Adafruit_ADS1115& ads);
     int lecturaHumedad();
+    void calibrarSeco();
+    void calibrarMojado();
 };
 
 #endif

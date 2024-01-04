@@ -5,8 +5,6 @@
 #include <SensorLuz.h>
 Adafruit_ADS1115 ads1115;
 
-float refResistance = 2160.0;  // Resistencia de referencia de la NTC
-
 //Valores de salinidad
 #define power_pin 5
 
@@ -270,6 +268,23 @@ void setup() {
         case 1:
           Serial.println("Pin 0: Humedad");
           //calibrar Humedad
+          Serial.println("Coloque el sensor en condiciones de seco y presione Enter");
+          while (!Serial.available()) {
+          }
+          while (Serial.available()) { // Limpiar el buffer de entrada para evitar problemas con futuras lecturas
+            Serial.read();
+          }
+          sensorHum.calibrarSeco();// Lanzar método de calibrar en seco
+
+          Serial.println("Coloque el sensor en condiciones de mojado y presione Enter");// Mensaje de que el sensor tiene que estar en mojado
+          while (!Serial.available()) {
+          }
+          while (Serial.available()) {
+            Serial.read();
+          }
+          sensorHum.calibrarMojado();// Lanzar método de calibrar en mojado
+
+          Serial.println("Calibración completada.");
           break;
 
         case 2:
@@ -296,6 +311,7 @@ void setup() {
           //mandar calibT a la clase temperatura
           sensorTemp.setCalibration(calibT);
 
+          Serial.println("Calibración completada.");
           break;
         case 3:
           Serial.println("Pin 2: PH");
