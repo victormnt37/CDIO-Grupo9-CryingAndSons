@@ -9,4 +9,11 @@ float SensorPh::lecturaPh() {
   float phValue = (3.5 * voltios) + offset;
   return phValue;
 }
+void SensorPh::calibrarOffsetAutomatico() {
+  // Calibrar automáticamente midiendo pH en una solución de pH 7 con offset 0
+  float ph7Puro = 7.0;
+  float lecturaActual = lecturaPh();
+  float nuevoOffset = ph7Puro - lecturaActual;
+  offset = nuevoOffset;
+}
 

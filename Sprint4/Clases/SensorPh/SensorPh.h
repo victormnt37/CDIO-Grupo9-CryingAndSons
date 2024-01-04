@@ -12,6 +12,7 @@ class SensorPh {
   public:
     SensorPh(int canal, float offsetPh,Adafruit_ADS1115& ads);
     float lecturaPh();
+    void calibrarOffset(float nuevoOffset);
 };
 
 #endif

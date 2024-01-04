@@ -8,10 +8,6 @@ Adafruit_ADS1115 ads1115;
 //Valores de salinidad
 #define power_pin 5
 
-//variables para pH
-float Offset = 0.35;
-
-//variables para luminosidad
 #include <ESP8266WiFi.h>
 
 // Comentar/Descomentar para ver mensajes de depuracion en monitor serie y/o respuesta del HTTP server
@@ -191,9 +187,13 @@ void HTTPGet(String fieldData[], int numFields) {
   }
 }
 
+//variables temperatura
 int tempA;
 int T = 0;
 float calibT = 2.65;
+
+//variables para pH
+float Offset = 0.35;
 
 // Declaración de los objetos tipo sensor *primer valor es el canal del ADS al que estan conectados
 SensorTemperatura sensorTemp(1, ads1115, calibT);
@@ -271,18 +271,18 @@ void setup() {
           Serial.println("Coloque el sensor en condiciones de seco y presione Enter");
           while (!Serial.available()) {
           }
-          while (Serial.available()) { // Limpiar el buffer de entrada para evitar problemas con futuras lecturas
+          while (Serial.available()) {  // Limpiar el buffer de entrada para evitar problemas con futuras lecturas
             Serial.read();
           }
-          sensorHum.calibrarSeco();// Lanzar método de calibrar en seco
+          sensorHum.calibrarSeco();  // Lanzar método de calibrar en seco
 
-          Serial.println("Coloque el sensor en condiciones de mojado y presione Enter");// Mensaje de que el sensor tiene que estar en mojado
+          Serial.println("Coloque el sensor en condiciones de mojado y presione Enter");  // Mensaje de que el sensor tiene que estar en mojado
           while (!Serial.available()) {
           }
           while (Serial.available()) {
             Serial.read();
           }
-          sensorHum.calibrarMojado();// Lanzar método de calibrar en mojado
+          sensorHum.calibrarMojado();  // Lanzar método de calibrar en mojado
 
           Serial.println("Calibración completada.");
           break;
@@ -316,6 +316,14 @@ void setup() {
         case 3:
           Serial.println("Pin 2: PH");
           //calibrar PH
+          Serial.println("Coloque el sensor en condiciones de PH=7 y presione Enter");
+          while (!Serial.available()) {
+          }
+          while (Serial.available()) {  // Limpiar el buffer de entrada para evitar problemas con futuras lecturas
+            Serial.read();
+          }
+          miSensorPh.calibrarOffsetAutomatico();
+          Serial.println("Calibración completada.");
           break;
         case 4:
           Serial.println("Pin 3: Luz");
