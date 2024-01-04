@@ -328,6 +328,7 @@ void setup() {
         case 4:
           Serial.println("Pin 3: Luz");
           //calibrar Luz
+          Serial.println("Esta funcion esta desabilitada.");
           break;
         case 5:
           Serial.println("Salir");
