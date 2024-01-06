@@ -5,12 +5,14 @@ let valorTemperatura = 'Inactivo';
 let valorSalinidad = 'Inactivo';
 let valorPH = 'Inactivo';
 let valorLuz = 'Inactivo';
+let valorGPS = 'Inactivo';
 
 const divHumedad = document.getElementById('humedad').lastElementChild;
 const divTemperatura = document.getElementById('temperatura').lastElementChild;
 const divSalinidad = document.getElementById('salinidad').lastElementChild;
 const divPH = document.getElementById('PH').lastElementChild;
 const divLuz = document.getElementById('luz').lastElementChild;
+const divGPS = document.getElementById('GPS').lastElementChild;
 
 actualizarDatos(); // Se actualizan los datos nada más se abre la página
 setInterval(() => {
@@ -29,6 +31,7 @@ function actualizarDatos() {
       valorHumedad = data.with[0].content.field3; // Humedad
       valorPH = data.with[0].content.field4; // PH
       valorLuz = data.with[0].content.field5; // Luz
+      valorGPS = data.with[0].content.field6; // DPS
 
       valorHumedad == undefined // Si el dato no está definido pq no se envia por el api se muestra como inactivo
         ? (divHumedad.innerHTML = 'Inactivo')
@@ -49,6 +52,10 @@ function actualizarDatos() {
       valorLuz == undefined
         ? (divLuz.innerHTML = 'Inactivo')
         : (divLuz.innerHTML = valorLuz);
+
+      valorGPS == undefined
+        ? (divLuz.innerHTML = 'Inactivo')
+        : (divLuz.innerHTML = valorGPS);
     })
     .catch(function (error) {
       console.log('Hubo un problema con la solicitud fetch: ', error);
