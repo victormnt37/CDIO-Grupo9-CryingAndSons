@@ -54,8 +54,8 @@ function actualizarDatos() {
         : (divLuz.innerHTML = valorLuz);
 
       valorGPS == undefined
-        ? (divLuz.innerHTML = 'Inactivo')
-        : (divLuz.innerHTML = valorGPS);
+        ? (divGPS.innerHTML = 'Inactivo')
+        : (divGPS.innerHTML = valorGPS);
     })
     .catch(function (error) {
       console.log('Hubo un problema con la solicitud fetch: ', error);
