@@ -202,14 +202,10 @@ SensorHumedad sensorHum(0, ads1115);
 SensorLuz sensorLuz(3, ads1115);
 
 
-//--------------------NUEVA ESCALA DE LUZ--------------------------------
-//                        OSCURO == 0
-//                     LUZ NATURAL == 1
-//                   LUZ ARTIFICIAL == 10
-
-//creo que hay un error en vuetro algoritmo, chequear la clase y corregir si hace falta
-// float voltage5 = (adc10*4.096)/32767; // linea innecesaria nunca llegais a usar los resultados de voltage5 solo de adc10
-
+//LUZ-----------------
+//OSCURO == 0
+//LUZ NATURAL == 1
+//LUZ ARTIFICIAL == 10
 
 
 void setup() {
